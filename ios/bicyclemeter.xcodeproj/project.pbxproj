@@ -14,9 +14,19 @@
 		8405F09B29BD12B7002CD175 /* bicyclemeterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8405F09A29BD12B7002CD175 /* bicyclemeterTests.swift */; };
 		8405F0A529BD12B7002CD175 /* bicyclemeterUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8405F0A429BD12B7002CD175 /* bicyclemeterUITests.swift */; };
 		8405F0A729BD12B7002CD175 /* bicyclemeterUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8405F0A629BD12B7002CD175 /* bicyclemeterUITestsLaunchTests.swift */; };
+		842E021C29C508DD00F26D82 /* Runtime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842E021B29C508DD00F26D82 /* Runtime.swift */; };
+		842E021F29C50A1A00F26D82 /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842E021E29C50A1A00F26D82 /* Error.swift */; };
+		84512B7129C5C5D0005F290E /* Serde in Frameworks */ = {isa = PBXBuildFile; productRef = 84512B7029C5C5D0005F290E /* Serde */; };
+		84512B7329C5CE84005F290E /* StorageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84512B7229C5CE84005F290E /* StorageViewModel.swift */; };
+		84512B7629C60436005F290E /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84512B7529C60436005F290E /* WelcomeView.swift */; };
+		84512B7829C605C6005F290E /* CyclingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84512B7729C605C6005F290E /* CyclingView.swift */; };
+		846243E229D0699C009F4314 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846243E129D0699C009F4314 /* HistoryView.swift */; };
+		846243E429D06A30009F4314 /* TraitHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846243E329D06A30009F4314 /* TraitHelpers.swift */; };
 		8481D0CD29BF17080078C13A /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8481D0CC29BF17080078C13A /* CoreBluetooth.framework */; };
 		84928ABA29BE09D500ACB297 /* libreax.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 84928AB929BE09C900ACB297 /* libreax.a */; };
 		84928ABC29BE1DE600ACB297 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84928ABB29BE1DE600ACB297 /* CoreLocation.framework */; };
+		8498F52529CF2EC900E79E1D /* TrackViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8498F52429CF2EC900E79E1D /* TrackViewModel.swift */; };
+		8498F52729CF2F0700E79E1D /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8498F52629CF2F0700E79E1D /* CoreMotion.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,10 +57,20 @@
 		8405F0A029BD12B7002CD175 /* bicyclemeterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = bicyclemeterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8405F0A429BD12B7002CD175 /* bicyclemeterUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = bicyclemeterUITests.swift; sourceTree = "<group>"; };
 		8405F0A629BD12B7002CD175 /* bicyclemeterUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = bicyclemeterUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		842E021929C503E700F26D82 /* Serde */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Serde; sourceTree = "<group>"; };
+		842E021B29C508DD00F26D82 /* Runtime.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Runtime.swift; sourceTree = "<group>"; };
+		842E021E29C50A1A00F26D82 /* Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
+		84512B7229C5CE84005F290E /* StorageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageViewModel.swift; sourceTree = "<group>"; };
+		84512B7529C60436005F290E /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
+		84512B7729C605C6005F290E /* CyclingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyclingView.swift; sourceTree = "<group>"; };
+		846243E129D0699C009F4314 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		846243E329D06A30009F4314 /* TraitHelpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TraitHelpers.swift; sourceTree = "<group>"; };
 		8481D0CC29BF17080078C13A /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		84928AB929BE09C900ACB297 /* libreax.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libreax.a; path = "../../../Users/eerie/projects/tmp/bicyclemeter/x86_64-apple-ios/debug/libreax.a"; sourceTree = "<group>"; };
 		84928ABB29BE1DE600ACB297 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		84928ABD29BE265B00ACB297 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8498F52429CF2EC900E79E1D /* TrackViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackViewModel.swift; sourceTree = "<group>"; };
+		8498F52629CF2F0700E79E1D /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,8 +78,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84512B7129C5C5D0005F290E /* Serde in Frameworks */,
 				84928ABC29BE1DE600ACB297 /* CoreLocation.framework in Frameworks */,
 				8481D0CD29BF17080078C13A /* CoreBluetooth.framework in Frameworks */,
+				8498F52729CF2F0700E79E1D /* CoreMotion.framework in Frameworks */,
 				84928ABA29BE09D500ACB297 /* libreax.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -84,6 +106,7 @@
 		8405F07D29BD12B5002CD175 = {
 			isa = PBXGroup;
 			children = (
+				842E021829C503E700F26D82 /* Packages */,
 				8405F08829BD12B6002CD175 /* bicyclemeter */,
 				8405F09929BD12B7002CD175 /* bicyclemeterTests */,
 				8405F0A329BD12B7002CD175 /* bicyclemeterUITests */,
@@ -105,6 +128,10 @@
 		8405F08829BD12B6002CD175 /* bicyclemeter */ = {
 			isa = PBXGroup;
 			children = (
+				84512B7929C626CE005F290E /* ViewModels */,
+				84512B7429C60420005F290E /* Views */,
+				842E021D29C50A0E00F26D82 /* Models */,
+				842E021A29C508C100F26D82 /* Reax */,
 				84928ABD29BE265B00ACB297 /* Info.plist */,
 				8405F08929BD12B6002CD175 /* bicyclemeterApp.swift */,
 				8405F08B29BD12B6002CD175 /* ContentView.swift */,
@@ -139,9 +166,54 @@
 			path = bicyclemeterUITests;
 			sourceTree = "<group>";
 		};
+		842E021829C503E700F26D82 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				842E021929C503E700F26D82 /* Serde */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		842E021A29C508C100F26D82 /* Reax */ = {
+			isa = PBXGroup;
+			children = (
+				846243E329D06A30009F4314 /* TraitHelpers.swift */,
+				842E021B29C508DD00F26D82 /* Runtime.swift */,
+			);
+			path = Reax;
+			sourceTree = "<group>";
+		};
+		842E021D29C50A0E00F26D82 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				842E021E29C50A1A00F26D82 /* Error.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		84512B7429C60420005F290E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				84512B7529C60436005F290E /* WelcomeView.swift */,
+				84512B7729C605C6005F290E /* CyclingView.swift */,
+				846243E129D0699C009F4314 /* HistoryView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		84512B7929C626CE005F290E /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				84512B7229C5CE84005F290E /* StorageViewModel.swift */,
+				8498F52429CF2EC900E79E1D /* TrackViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
 		84928AB629BE098200ACB297 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				8498F52629CF2F0700E79E1D /* CoreMotion.framework */,
 				8481D0CC29BF17080078C13A /* CoreBluetooth.framework */,
 				84928ABB29BE1DE600ACB297 /* CoreLocation.framework */,
 				84928AB929BE09C900ACB297 /* libreax.a */,
@@ -165,6 +237,9 @@
 			dependencies = (
 			);
 			name = bicyclemeter;
+			packageProductDependencies = (
+				84512B7029C5C5D0005F290E /* Serde */,
+			);
 			productName = bicyclemeter;
 			productReference = 8405F08629BD12B6002CD175 /* bicyclemeter.app */;
 			productType = "com.apple.product-type.application";
@@ -279,8 +354,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8498F52529CF2EC900E79E1D /* TrackViewModel.swift in Sources */,
+				842E021F29C50A1A00F26D82 /* Error.swift in Sources */,
+				846243E429D06A30009F4314 /* TraitHelpers.swift in Sources */,
+				84512B7629C60436005F290E /* WelcomeView.swift in Sources */,
 				8405F08C29BD12B6002CD175 /* ContentView.swift in Sources */,
+				842E021C29C508DD00F26D82 /* Runtime.swift in Sources */,
 				8405F08A29BD12B6002CD175 /* bicyclemeterApp.swift in Sources */,
+				84512B7829C605C6005F290E /* CyclingView.swift in Sources */,
+				846243E229D0699C009F4314 /* HistoryView.swift in Sources */,
+				84512B7329C5CE84005F290E /* StorageViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -623,6 +706,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		84512B7029C5C5D0005F290E /* Serde */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Serde;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8405F07E29BD12B5002CD175 /* Project object */;
 }

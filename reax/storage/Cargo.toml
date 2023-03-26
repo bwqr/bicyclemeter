@@ -6,3 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+base = { path = "../base" }
+
+bincode.workspace = true
+log.workspace = true
+serde.workspace = true
+sled.workspace = true
+tokio.workspace = true
+
+chrono = "0.4.24"

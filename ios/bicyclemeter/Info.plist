@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSMotionUsageDescription</key>
+	<string>The motion is used for tracking your motion while cycling</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>The bluetooth is used for connecting sensors and collect data from them.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>The bluetooth is used for connecting sensors and collect data from them.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>The location is used for calculating speed of the bicycle.</string>
+</dict>
+</plist>

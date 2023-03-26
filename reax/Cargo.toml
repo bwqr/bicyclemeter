@@ -1,6 +1,8 @@
 [workspace]
 members = [
+    "base",
     "ios",
+    "storage",
 ]
 
 [package]
@@ -10,8 +12,19 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[workspace.dependencies]
+log = "0.4.17"
+once_cell = "1.17.1"
+bincode = "1.3.3"
+serde = "1.0.157"
+tokio = { version = "1.26.0", features = ["rt-multi-thread", "time"] }
+sled = "0.34.7"
+
 [dependencies]
 
 [profile.dev]
 opt-level = "z"
 debug = false
+
+[profile.release]
+lto=true
