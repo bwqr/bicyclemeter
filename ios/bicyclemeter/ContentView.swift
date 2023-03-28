@@ -2,50 +2,6 @@ import SwiftUI
 import CoreLocation
 import CoreBluetooth
 
-class LocationManager : NSObject, CLLocationManagerDelegate {
-    private var manager: CLLocationManager
-    private var trackSpeed = false
-
-    init(_ manager: CLLocationManager) {
-        self.manager = manager
-        super.init()
-        manager.delegate = self
-    }
-
-    func startSpeedTracking() {
-        trackSpeed = true
-
-        switch manager.authorizationStatus {
-        case .notDetermined:
-            manager.requestWhenInUseAuthorization()
-            break
-        case .authorizedWhenInUse, .authorizedAlways:
-            manager.startUpdatingLocation()
-            break
-        default:
-            print("\(manager.authorizationStatus)")
-        }
-    }
-
-    func stopSpeedTracking() {
-        trackSpeed = false
-        manager.stopUpdatingLocation()
-    }
-
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        if trackSpeed, case .authorizedWhenInUse = manager.authorizationStatus {
-            manager.startUpdatingLocation()
-        }
-    }
-
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        print("Received locations", locations.count)
-        for location in locations {
-            print("Speed \(location.speed)")
-        }
-    }
-}
-
 class BluetootManager: NSObject, CBCentralManagerDelegate {
     var central: CBCentralManager
 
@@ -69,7 +25,6 @@ class BluetootManager: NSObject, CBCentralManagerDelegate {
 }
 
 struct ContentView: View {
-    var locationManager = LocationManager(CLLocationManager())
     var bluetoothManager = BluetootManager(CBCentralManager())
     @State var showWelcomeView: Bool = false
 

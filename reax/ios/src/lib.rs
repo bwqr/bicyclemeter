@@ -1,7 +1,7 @@
-use std::{ffi::{c_char, CStr, c_void, c_int, c_uchar}, sync::{Arc, Mutex, mpsc::Sender}, future::Future};
+use std::{ffi::CStr, sync::{Arc, Mutex, mpsc::Sender}, future::Future};
 
 use once_cell::sync::OnceCell;
-use serde::Serialize;
+use serde::de::DeserializeOwned;
 use tokio::task::JoinHandle;
 
 mod storage;
@@ -9,35 +9,43 @@ mod storage;
 static ASYNC_RUNTIME: OnceCell<tokio::runtime::Runtime> = OnceCell::new();
 static HANDLER: OnceCell<Mutex<Sender<(i32, bool, Vec<u8>)>>> = OnceCell::new();
 
-#[derive(Serialize)]
-enum Message<T: Serialize, E: Serialize> {
-    Ok(T),
-    Err(E),
-    Complete,
-}
+//#[derive(Serialize)]
+//enum Message<T: Serialize, E: Serialize> {
+//    Ok(T),
+//    Err(E),
+//    Complete,
+//}
+//
+//pub(crate) fn send_stream<T: Serialize, E: Serialize>(stream_id: i32, message: Message<T, E>) {
+//    let bytes = bincode::serialize(&message).expect("failed to searialize message");
+//
+//    HANDLER
+//        .get()
+//        .unwrap()
+//        .lock()
+//        .unwrap()
+//        .send((stream_id, true, bytes))
+//        .unwrap();
+//}
+//
+//pub(crate) fn send_once<T: Serialize, E: Serialize>(once_id: i32, message: Result<T, E>) {
+//    let bytes = bincode::serialize(&message).expect("failed to searialize message");
+//
+//    HANDLER
+//        .get()
+//        .unwrap()
+//        .lock()
+//        .unwrap()
+//        .send((once_id, false, bytes))
+//        .unwrap();
+//}
 
-pub(crate) fn send_stream<T: Serialize, E: Serialize>(stream_id: i32, message: Message<T, E>) {
-    let bytes = bincode::serialize(&message).expect("failed to searialize message");
+pub unsafe fn deserialize<T: DeserializeOwned>(bytes: * const u8, size: isize) -> T {
+    let slice = unsafe { std::slice::from_raw_parts(bytes, size.try_into().unwrap()) };
+    let value = bincode::deserialize::<T>(slice).unwrap();
+    std::mem::forget(slice);
 
-    HANDLER
-        .get()
-        .unwrap()
-        .lock()
-        .unwrap()
-        .send((stream_id, true, bytes))
-        .unwrap();
-}
-
-pub(crate) fn send_once<T: Serialize, E: Serialize>(once_id: i32, message: Result<T, E>) {
-    let bytes = bincode::serialize(&message).expect("failed to searialize message");
-
-    HANDLER
-        .get()
-        .unwrap()
-        .lock()
-        .unwrap()
-        .send((once_id, false, bytes))
-        .unwrap();
+    value
 }
 
 pub fn spawn<F>(future: F) -> JoinHandle<F::Output>
@@ -49,7 +57,7 @@ where
 }
 
 #[no_mangle]
-pub extern "C" fn reax_init(storage_dir: *const c_char) {
+pub extern "C" fn reax_init(storage_dir: *const i8) {
     let storage_dir = unsafe { CStr::from_ptr(storage_dir).to_str().unwrap().to_string() };
 
     std::env::set_var("RUST_LOG", "debug");
@@ -82,7 +90,7 @@ pub extern "C" fn reax_init(storage_dir: *const c_char) {
 }
 
 #[no_mangle]
-pub extern fn reax_init_handler(ptr: *const c_void, f: unsafe extern fn(c_int, c_uchar, *const c_uchar, c_int, *const c_void)) {
+pub extern fn reax_init_handler(ptr: *const (), f: unsafe extern fn(i32, bool, *const u8, usize, *const ())) {
     let (send, recv) = std::sync::mpsc::channel();
 
     HANDLER
@@ -91,12 +99,12 @@ pub extern fn reax_init_handler(ptr: *const c_void, f: unsafe extern fn(c_int, c
         .expect("failed to set handler");
 
     while let Ok((wait_id, ok, bytes)) = recv.recv() {
-        unsafe { f(wait_id, ok as c_uchar, bytes.as_ptr(), bytes.len() as c_int, ptr) }
+        unsafe { f(wait_id, ok, bytes.as_ptr(), bytes.len(), ptr) }
     }
 }
 
 #[no_mangle]
-pub extern "C" fn reax_abort(pointer: * mut c_void) {
+pub extern "C" fn reax_abort(pointer: * mut ()) {
     let handle = unsafe { Box::from_raw(pointer as * mut tokio::task::JoinHandle<()>) };
 
     ::log::debug!("received abort, {:p}", handle);

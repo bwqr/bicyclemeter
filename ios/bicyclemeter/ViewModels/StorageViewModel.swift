@@ -77,11 +77,36 @@ class StorageViewModel {
         }
     }
 
-    static func storeTrackValue(_ acc_x: Double, _ acc_y: Double, _ acc_z: Double) throws -> () {
-        let ptr = reax_storage_store_track_value(acc_x, acc_y, acc_z) { bytes, bytesLen in
+    static func deleteTrack(_ timestamp: Int64) throws -> () {
+        let ptr = reax_storage_delete_track(timestamp) { bytes, bytesLen in
             let array = Array(UnsafeBufferPointer(start: bytes, count: Int(bytesLen)))
 
             return UnsafeMutableRawPointer(Unmanaged.passRetained(BincodeDeserializer(input: array)).toOpaque())
+        }
+
+        let deserializer = Unmanaged<AnyObject>.fromOpaque(ptr!).takeRetainedValue() as! BincodeDeserializer
+
+        let index = try deserializer.deserialize_variant_index()
+
+        switch index {
+        case 0: return ()
+        case 1: throw try StorageError.deserialize(deserializer)
+        default: throw DeserializationError.invalidInput(issue: "Unknown variant index for StorageError")
+        }
+
+    }
+
+    static func storeTrackValue(_ track: TrackData) throws -> () {
+        let serializer = BincodeSerializer()
+        try track.serialize(serializer)
+        let bytes = serializer.get_bytes()
+
+        let ptr = bytes.withUnsafeBytes { bytes in
+            return reax_storage_store_track_value(bytes.baseAddress!, bytes.count) { bytes, bytesLen in
+                let array = Array(UnsafeBufferPointer(start: bytes, count: Int(bytesLen)))
+
+                return UnsafeMutableRawPointer(Unmanaged.passRetained(BincodeDeserializer(input: array)).toOpaque())
+            }
         }
 
         let deserializer = Unmanaged<AnyObject>.fromOpaque(ptr!).takeRetainedValue() as! BincodeDeserializer

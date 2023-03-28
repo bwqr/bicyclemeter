@@ -1,8 +1,6 @@
-use std::ffi::{c_int, c_uchar, c_double};
+use crate::deserialize;
 
-use crate::spawn;
-
-type DeserializeHandler = unsafe extern "C" fn(*const c_uchar, c_int) -> *mut c_uchar;
+type DeserializeHandler = unsafe extern "C" fn(*const u8, usize) -> *mut u8;
 
 #[no_mangle]
 pub extern "C" fn reax_storage_init() {
@@ -10,43 +8,63 @@ pub extern "C" fn reax_storage_init() {
 }
 
 #[no_mangle]
-pub extern "C" fn reax_storage_welcome_shown(f: DeserializeHandler) -> *mut c_uchar {
+pub extern "C" fn reax_storage_welcome_shown(f: DeserializeHandler) -> *mut u8 {
     let bytes = bincode::serialize(&::storage::welcome_shown()).unwrap();
 
-    unsafe { f(bytes.as_ptr(), bytes.len() as c_int) }
+    unsafe { f(bytes.as_ptr(), bytes.len()) }
 }
 
 #[no_mangle]
-pub extern "C" fn reax_storage_show_welcome(f: DeserializeHandler) -> *mut c_uchar {
+pub extern "C" fn reax_storage_show_welcome(f: DeserializeHandler) -> *mut u8 {
     let bytes = bincode::serialize(&::storage::show_welcome()).unwrap();
 
-    unsafe { f(bytes.as_ptr(), bytes.len() as c_int) }
+    unsafe { f(bytes.as_ptr(), bytes.len()) }
 }
 
 #[no_mangle]
-pub extern "C" fn reax_storage_start_track(f: DeserializeHandler) -> *mut c_uchar {
-    let bytes = bincode::serialize(&::storage::start_track()).unwrap();
+pub extern "C" fn reax_storage_start_track(f: DeserializeHandler) -> *mut u8 {
+    let bytes = bincode::serialize(&::storage::track::start_track()).unwrap();
 
-    unsafe { f(bytes.as_ptr(), bytes.len() as c_int) }
+    unsafe { f(bytes.as_ptr(), bytes.len()) }
 }
 
 #[no_mangle]
-pub extern "C" fn reax_storage_stop_track(f: DeserializeHandler) -> *mut c_uchar {
-    let bytes = bincode::serialize(&::storage::stop_track()).unwrap();
+pub extern "C" fn reax_storage_delete_track(timestamp: i64, f: DeserializeHandler) -> *mut u8 {
+    let bytes = bincode::serialize(&::storage::track::delete_track(timestamp)).unwrap();
 
-    unsafe { f(bytes.as_ptr(), bytes.len() as c_int) }
+    unsafe { f(bytes.as_ptr(), bytes.len()) }
 }
 
 #[no_mangle]
-pub extern "C" fn reax_storage_store_track_value(acc_x: c_double, acc_y: c_double, acc_z: c_double, f: DeserializeHandler) -> *mut c_uchar {
-    let bytes = bincode::serialize(&::storage::store_track_value(acc_x, acc_y, acc_z)).unwrap();
+pub extern "C" fn reax_storage_stop_track(f: DeserializeHandler) -> *mut u8 {
+    let bytes = bincode::serialize(&::storage::track::stop_track()).unwrap();
 
-    unsafe { f(bytes.as_ptr(), bytes.len() as c_int) }
+    unsafe { f(bytes.as_ptr(), bytes.len()) }
 }
 
 #[no_mangle]
-pub extern "C" fn reax_storage_tracks(f: DeserializeHandler) -> *mut c_uchar {
-    let bytes = bincode::serialize(&::storage::tracks()).unwrap();
+pub extern "C" fn reax_storage_store_track_value(
+    bytes: *const u8,
+    size: isize,
+    f: DeserializeHandler,
+) -> *mut u8 {
+    let value = unsafe { deserialize(bytes, size) };
 
-    unsafe { f(bytes.as_ptr(), bytes.len() as c_int) }
+    let bytes = bincode::serialize(&::storage::track::store_track_value(value)).unwrap();
+
+    unsafe { f(bytes.as_ptr(), bytes.len()) }
+}
+
+#[no_mangle]
+pub extern "C" fn reax_storage_tracks(f: DeserializeHandler) -> *mut u8 {
+    let bytes = bincode::serialize(&::storage::track::tracks()).unwrap();
+
+    unsafe { f(bytes.as_ptr(), bytes.len()) }
+}
+
+#[no_mangle]
+pub extern "C" fn reax_storage_track(timestamp: i64, f: DeserializeHandler) -> *mut u8 {
+    let bytes = bincode::serialize(&::storage::track::track(timestamp)).unwrap();
+
+    unsafe { f(bytes.as_ptr(), bytes.len()) }
 }

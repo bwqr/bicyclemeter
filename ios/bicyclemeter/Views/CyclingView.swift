@@ -8,21 +8,27 @@ struct CyclingView: View {
             VStack {
                 Text("Merhaba Cycling")
 
-                NavigationLink(destination: HistoryView(), label: { Text("Track History") })
+                NavigationLink(destination: TrackHistoryView(), label: { Text("Track History") })
 
-                Button(action: {
-                    if self.track.tracking {
+                if self.track.tracking {
+                    if let info = self.track.info {
+                        Text("Accelerometer, \(info.accelerometer.x) \(info.accelerometer.y) \(info.accelerometer.z)")
+                        Text("Gyro, \(info.gyro.x) \(info.gyro.y) \(info.gyro.z)")
+                        Text("Location, \(info.speed)")
+                    }
+
+                    Button(action: {
                         track.stopTrack()
-                    } else {
-                        track.startTrack()
-                    }
-                }, label: {
-                    if self.track.tracking {
+                    }, label: {
                         Text("Stop cycling")
-                    } else {
+                    })
+                } else {
+                    Button(action: {
+                        track.startTrack()
+                    }, label: {
                         Text("Start cycling")
-                    }
-                })
+                    })
+                }
             }
         }
     }
