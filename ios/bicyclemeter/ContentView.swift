@@ -2,30 +2,21 @@ import SwiftUI
 import CoreLocation
 import CoreBluetooth
 
-class BluetootManager: NSObject, CBCentralManagerDelegate {
-    var central: CBCentralManager
+struct SafeContainer<T, Content: View> : View {
+    @Binding var value: T?
 
-    init(_ central: CBCentralManager) {
-        self.central = central
-        super.init()
-        central.delegate = self
-    }
+    @ViewBuilder var content: (_ value: Binding<T>) -> Content
 
-    func scanPeripherals() {
-        if case .poweredOn = self.central.state {
-            self.central.scanForPeripherals(withServices: nil)
+    var body: some View {
+        if value != nil {
+            content(Binding($value)!)
         } else {
-            print("Please open the bluetooth first")
+            ZStack { }
         }
-    }
-
-    func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        print("\(central.state)")
     }
 }
 
 struct ContentView: View {
-    var bluetoothManager = BluetootManager(CBCentralManager())
     @State var showWelcomeView: Bool = false
 
     var body: some View {

@@ -7,6 +7,9 @@ struct CyclingView: View {
         NavigationView {
             VStack {
                 Text("Merhaba Cycling")
+                NavigationLink(destination: DevicesView(bluetooth: BluetoothManager()), label: {
+                    Text("Bluetooth Devices")
+                })
 
                 NavigationLink(destination: TrackHistoryView(), label: { Text("Track History") })
 

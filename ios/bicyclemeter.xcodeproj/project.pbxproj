@@ -20,6 +20,8 @@
 		84512B7329C5CE84005F290E /* StorageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84512B7229C5CE84005F290E /* StorageViewModel.swift */; };
 		84512B7629C60436005F290E /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84512B7529C60436005F290E /* WelcomeView.swift */; };
 		84512B7829C605C6005F290E /* CyclingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84512B7729C605C6005F290E /* CyclingView.swift */; };
+		8455A77F29EABF3300D71986 /* BluetoothManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8455A77E29EABF3300D71986 /* BluetoothManager.swift */; };
+		84622AD829D32DF900BC4F1E /* DevicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84622AD729D32DF900BC4F1E /* DevicesView.swift */; };
 		846243E429D06A30009F4314 /* TraitHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846243E329D06A30009F4314 /* TraitHelpers.swift */; };
 		8481D0CD29BF17080078C13A /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8481D0CC29BF17080078C13A /* CoreBluetooth.framework */; };
 		84928ABA29BE09D500ACB297 /* libreax.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 84928AB929BE09C900ACB297 /* libreax.a */; };
@@ -46,6 +48,13 @@
 			remoteGlobalIDString = 8405F08529BD12B6002CD175;
 			remoteInfo = bicyclemeter;
 		};
+		8455A78429EAC21600D71986 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8405F07E29BD12B5002CD175 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8455A78029EAC20D00D71986;
+			remoteInfo = cargo_reax;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -65,6 +74,8 @@
 		84512B7229C5CE84005F290E /* StorageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageViewModel.swift; sourceTree = "<group>"; };
 		84512B7529C60436005F290E /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		84512B7729C605C6005F290E /* CyclingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyclingView.swift; sourceTree = "<group>"; };
+		8455A77E29EABF3300D71986 /* BluetoothManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothManager.swift; sourceTree = "<group>"; };
+		84622AD729D32DF900BC4F1E /* DevicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicesView.swift; sourceTree = "<group>"; };
 		846243E329D06A30009F4314 /* TraitHelpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TraitHelpers.swift; sourceTree = "<group>"; };
 		8481D0CC29BF17080078C13A /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		84928AB929BE09C900ACB297 /* libreax.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libreax.a; path = "../../../Users/eerie/projects/tmp/bicyclemeter/x86_64-apple-ios/debug/libreax.a"; sourceTree = "<group>"; };
@@ -141,6 +152,7 @@
 				8405F08B29BD12B6002CD175 /* ContentView.swift */,
 				8405F08D29BD12B7002CD175 /* Assets.xcassets */,
 				8405F08F29BD12B7002CD175 /* Preview Content */,
+				8455A77E29EABF3300D71986 /* BluetoothManager.swift */,
 			);
 			path = bicyclemeter;
 			sourceTree = "<group>";
@@ -203,6 +215,7 @@
 				84B324CB29D1E9390096ADA5 /* TrackView.swift */,
 				84512B7529C60436005F290E /* WelcomeView.swift */,
 				84512B7729C605C6005F290E /* CyclingView.swift */,
+				84622AD729D32DF900BC4F1E /* DevicesView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -229,6 +242,23 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXLegacyTarget section */
+		8455A78029EAC20D00D71986 /* cargo_reax */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = ../ios/build_rust_deps.sh;
+			buildConfigurationList = 8455A78129EAC20D00D71986 /* Build configuration list for PBXLegacyTarget "cargo_reax" */;
+			buildPhases = (
+			);
+			buildToolPath = /bin/sh;
+			buildWorkingDirectory = ../reax;
+			dependencies = (
+			);
+			name = cargo_reax;
+			passBuildSettingsInEnvironment = 1;
+			productName = cargo_reax;
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXNativeTarget section */
 		8405F08529BD12B6002CD175 /* bicyclemeter */ = {
 			isa = PBXNativeTarget;
@@ -241,6 +271,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				8455A78529EAC21600D71986 /* PBXTargetDependency */,
 			);
 			name = bicyclemeter;
 			packageProductDependencies = (
@@ -307,6 +338,9 @@
 						CreatedOnToolsVersion = 14.2;
 						TestTargetID = 8405F08529BD12B6002CD175;
 					};
+					8455A78029EAC20D00D71986 = {
+						CreatedOnToolsVersion = 14.2;
+					};
 				};
 			};
 			buildConfigurationList = 8405F08129BD12B5002CD175 /* Build configuration list for PBXProject "bicyclemeter" */;
@@ -325,6 +359,7 @@
 				8405F08529BD12B6002CD175 /* bicyclemeter */,
 				8405F09529BD12B7002CD175 /* bicyclemeterTests */,
 				8405F09F29BD12B7002CD175 /* bicyclemeterUITests */,
+				8455A78029EAC20D00D71986 /* cargo_reax */,
 			);
 		};
 /* End PBXProject section */
@@ -363,12 +398,14 @@
 				8498F52529CF2EC900E79E1D /* TrackViewModel.swift in Sources */,
 				84B324CD29D1E9390096ADA5 /* TrackView.swift in Sources */,
 				842E021F29C50A1A00F26D82 /* Error.swift in Sources */,
+				84622AD829D32DF900BC4F1E /* DevicesView.swift in Sources */,
 				846243E429D06A30009F4314 /* TraitHelpers.swift in Sources */,
 				84512B7629C60436005F290E /* WelcomeView.swift in Sources */,
 				8405F08C29BD12B6002CD175 /* ContentView.swift in Sources */,
 				842E021C29C508DD00F26D82 /* Runtime.swift in Sources */,
 				8405F08A29BD12B6002CD175 /* bicyclemeterApp.swift in Sources */,
 				84512B7829C605C6005F290E /* CyclingView.swift in Sources */,
+				8455A77F29EABF3300D71986 /* BluetoothManager.swift in Sources */,
 				84512B7329C5CE84005F290E /* StorageViewModel.swift in Sources */,
 				84B324CC29D1E9390096ADA5 /* TrackHistoryView.swift in Sources */,
 				84B324CF29D1F6180096ADA5 /* Track.swift in Sources */,
@@ -404,6 +441,11 @@
 			isa = PBXTargetDependency;
 			target = 8405F08529BD12B6002CD175 /* bicyclemeter */;
 			targetProxy = 8405F0A129BD12B7002CD175 /* PBXContainerItemProxy */;
+		};
+		8455A78529EAC21600D71986 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8455A78029EAC20D00D71986 /* cargo_reax */;
+			targetProxy = 8455A78429EAC21600D71986 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -527,6 +569,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CARGO_TARGET_DIR = /Users/eerie/projects/tmp/bicyclemeter;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"bicyclemeter/Preview Content\"";
@@ -536,6 +579,10 @@
 				INFOPLIST_FILE = bicyclemeter/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Bicyclemeter;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "The bluetooth is used for connecting to the sensors and collecting data from them.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "The bluetooth is used for connecting sensors and collect data from them.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "The location is used for calculating speed of the bicycle.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "The motion is used for tracking your motion while cycling";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -546,9 +593,17 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"/Users/eerie/projects/tmp/bicyclemeter/aarch64-apple-ios/release",
-					"/Users/eerie/projects/tmp/bicyclemeter/x86_64-apple-ios/debug",
+				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*][arch=arm64]" = (
+					"$(inherited)",
+					"$(CARGO_TARGET_DIR)/aarch64-apple-ios/debug",
+				);
+				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=arm64]" = (
+					"$(inherited)",
+					"$(CARGO_TARGET_DIR)/aarch64-apple-ios-sim/debug",
+				);
+				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=x86_64]" = (
+					"$(inherited)",
+					"$(CARGO_TARGET_DIR)/x86_64-apple-ios/debug",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bwqr.bicyclemeter;
@@ -565,6 +620,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CARGO_TARGET_DIR = /Users/eerie/projects/tmp/bicyclemeter;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"bicyclemeter/Preview Content\"";
@@ -574,6 +630,10 @@
 				INFOPLIST_FILE = bicyclemeter/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Bicyclemeter;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "The bluetooth is used for connecting to the sensors and collecting data from them.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "The bluetooth is used for connecting sensors and collect data from them.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "The location is used for calculating speed of the bicycle.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "The motion is used for tracking your motion while cycling";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -584,9 +644,17 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"/Users/eerie/projects/tmp/bicyclemeter/aarch64-apple-ios/release",
-					"/Users/eerie/projects/tmp/bicyclemeter/x86_64-apple-ios/debug",
+				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*][arch=arm64]" = (
+					"$(inherited)",
+					"$(CARGO_TARGET_DIR)/aarch64-apple-ios/release",
+				);
+				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=arm64]" = (
+					"$(inherited)",
+					"$(CARGO_TARGET_DIR)/aarch64-apple-ios-sim/release",
+				);
+				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=x86_64]" = (
+					"$(inherited)",
+					"$(CARGO_TARGET_DIR)/x86_64-apple-ios/release",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bwqr.bicyclemeter;
@@ -674,6 +742,35 @@
 			};
 			name = Release;
 		};
+		8455A78229EAC20D00D71986 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CARGO_TARGET_DIR = /Users/eerie/projects/tmp/bicyclemeter;
+				CODE_SIGN_STYLE = Automatic;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 2FQV425TS4;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		8455A78329EAC20D00D71986 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CARGO_TARGET_DIR = /Users/eerie/projects/tmp/bicyclemeter;
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 2FQV425TS4;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -709,6 +806,15 @@
 			buildConfigurations = (
 				8405F0B129BD12B7002CD175 /* Debug */,
 				8405F0B229BD12B7002CD175 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8455A78129EAC20D00D71986 /* Build configuration list for PBXLegacyTarget "cargo_reax" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8455A78229EAC20D00D71986 /* Debug */,
+				8455A78329EAC20D00D71986 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
