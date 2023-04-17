@@ -17,7 +17,7 @@ log = "0.4.17"
 once_cell = "1.17.1"
 bincode = "1.3.3"
 serde = "1.0.157"
-tokio = { version = "1.26.0", features = ["rt-multi-thread", "time"] }
+tokio = { version = "1.26.0", features = ["rt-multi-thread", "time", "sync"] }
 sled = "0.34.7"
 
 [dependencies]

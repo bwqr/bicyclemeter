@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8404E44F29EC486300C3495C /* TrackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8404E44E29EC486300C3495C /* TrackManager.swift */; };
 		8405F08A29BD12B6002CD175 /* bicyclemeterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8405F08929BD12B6002CD175 /* bicyclemeterApp.swift */; };
 		8405F08C29BD12B6002CD175 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8405F08B29BD12B6002CD175 /* ContentView.swift */; };
 		8405F08E29BD12B7002CD175 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8405F08D29BD12B7002CD175 /* Assets.xcassets */; };
@@ -58,6 +59,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		8404E44E29EC486300C3495C /* TrackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackManager.swift; sourceTree = "<group>"; };
 		8405F08629BD12B6002CD175 /* bicyclemeter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bicyclemeter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8405F08929BD12B6002CD175 /* bicyclemeterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = bicyclemeterApp.swift; sourceTree = "<group>"; };
 		8405F08B29BD12B6002CD175 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -153,6 +155,7 @@
 				8405F08D29BD12B7002CD175 /* Assets.xcassets */,
 				8405F08F29BD12B7002CD175 /* Preview Content */,
 				8455A77E29EABF3300D71986 /* BluetoothManager.swift */,
+				8404E44E29EC486300C3495C /* TrackManager.swift */,
 			);
 			path = bicyclemeter;
 			sourceTree = "<group>";
@@ -402,6 +405,7 @@
 				846243E429D06A30009F4314 /* TraitHelpers.swift in Sources */,
 				84512B7629C60436005F290E /* WelcomeView.swift in Sources */,
 				8405F08C29BD12B6002CD175 /* ContentView.swift in Sources */,
+				8404E44F29EC486300C3495C /* TrackManager.swift in Sources */,
 				842E021C29C508DD00F26D82 /* Runtime.swift in Sources */,
 				8405F08A29BD12B6002CD175 /* bicyclemeterApp.swift in Sources */,
 				84512B7829C605C6005F290E /* CyclingView.swift in Sources */,
@@ -752,6 +756,7 @@
 				DEVELOPMENT_TEAM = 2FQV425TS4;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -765,6 +770,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 2FQV425TS4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -22,3 +22,24 @@ pub struct Track {
     pub header: TrackHeader,
     pub data: Vec<TrackData>,
 }
+
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub enum PeripheralKind {
+    Foot,
+    Bicycle,
+}
+
+impl Into<&'static str> for &PeripheralKind {
+    fn into(self) -> &'static str {
+        match self {
+            PeripheralKind::Foot => "Foot",
+            PeripheralKind::Bicycle => "Bicycle",
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SavedPeripheral {
+    pub kind: PeripheralKind,
+    pub uuid: String,
+}

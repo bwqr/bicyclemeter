@@ -1,7 +1,7 @@
 use std::{ffi::CStr, sync::{Arc, Mutex, mpsc::Sender}, future::Future};
 
 use once_cell::sync::OnceCell;
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Serialize};
 use tokio::task::JoinHandle;
 
 mod storage;
@@ -9,24 +9,24 @@ mod storage;
 static ASYNC_RUNTIME: OnceCell<tokio::runtime::Runtime> = OnceCell::new();
 static HANDLER: OnceCell<Mutex<Sender<(i32, bool, Vec<u8>)>>> = OnceCell::new();
 
-//#[derive(Serialize)]
-//enum Message<T: Serialize, E: Serialize> {
-//    Ok(T),
-//    Err(E),
-//    Complete,
-//}
-//
-//pub(crate) fn send_stream<T: Serialize, E: Serialize>(stream_id: i32, message: Message<T, E>) {
-//    let bytes = bincode::serialize(&message).expect("failed to searialize message");
-//
-//    HANDLER
-//        .get()
-//        .unwrap()
-//        .lock()
-//        .unwrap()
-//        .send((stream_id, true, bytes))
-//        .unwrap();
-//}
+#[derive(Serialize)]
+enum Message<T: Serialize, E: Serialize> {
+    Ok(T),
+    Err(E),
+    Complete,
+}
+
+pub(crate) fn send_stream<T: Serialize, E: Serialize>(stream_id: i32, message: Message<T, E>) {
+    let bytes = bincode::serialize(&message).expect("failed to searialize message");
+
+    HANDLER
+        .get()
+        .unwrap()
+        .lock()
+        .unwrap()
+        .send((stream_id, true, bytes))
+        .unwrap();
+}
 //
 //pub(crate) fn send_once<T: Serialize, E: Serialize>(once_id: i32, message: Result<T, E>) {
 //    let bytes = bincode::serialize(&message).expect("failed to searialize message");

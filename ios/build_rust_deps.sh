@@ -6,7 +6,7 @@ set -eux
 
 PATH=$PATH:$HOME/.cargo/bin
 
-RELFLAG=--release
+RELFLAG=
 if [[ "$CONFIGURATION" != "Debug" ]]; then
     RELFLAG=--release
 fi
@@ -40,16 +40,16 @@ for arch in $ARCHS; do
 
       # Intel iOS simulator
       export CFLAGS_x86_64_apple_ios="-target x86_64-apple-ios"
-      cargo build --lib $RELFLAG --target x86_64-apple-ios
+      cargo build --lib $RELFLAG --target x86_64-apple-ios --package ios
       ;;
 
     arm64)
       if [ $IS_SIMULATOR -eq 0 ]; then
         # Hardware iOS targets
-        cargo build --lib $RELFLAG --target aarch64-apple-ios
+        cargo build --lib $RELFLAG --target aarch64-apple-ios --package ios
       else
         # M1 iOS simulator -- currently in Nightly only and requires to build `libstd`
-        cargo build --lib $RELFLAG --target aarch64-apple-ios-sim
+        cargo build --lib $RELFLAG --target aarch64-apple-ios-sim --package ios
       fi
   esac
 done

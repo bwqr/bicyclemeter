@@ -1,7 +1,7 @@
 import CoreBluetooth
 import SwiftUI
 
-class BluetootManager2: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeripheralDelegate {
+class BluetootManager2: NSObject, ObservableObject {
     private var central: CBCentralManager
     private var peripheral: CBPeripheral?
     @Published var connected: Bool = false
@@ -9,57 +9,12 @@ class BluetootManager2: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     init(_ central: CBCentralManager) {
         self.central = central
         super.init()
-        central.delegate = self
-    }
-
-    func scanPeripherals() {
-        if case .poweredOn = self.central.state {
-            self.central.scanForPeripherals(withServices: nil)
-        } else {
-            print("Please open the bluetooth first")
-        }
-    }
-
-    func disconnect() {
-        if let peripheral = self.peripheral {
-            self.central.cancelPeripheralConnection(peripheral)
-        }
-    }
-
-    func connect(_ peripheral: CBPeripheral) {
-        self.peripheral = peripheral
-        peripheral.delegate = self
-
-        self.central.stopScan()
-        self.central.connect(peripheral)
-    }
-
-    func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        print("\(central.state)")
-    }
-
-    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-        if peripheral.identifier.uuidString == "30F46A11-8C6F-17B6-4756-C6D16E0F133B" {
-            print("Found the device")
-
-            self.peripheral = peripheral
-            peripheral.delegate = self
-
-            self.central.stopScan()
-            self.central.connect(peripheral)
-        }
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("Connected to the device")
         self.connected = true
         peripheral.discoverServices(nil)
-    }
-
-    func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-        print("Disconnected from the device")
-        self.connected = false
-        self.peripheral = nil
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
@@ -105,9 +60,10 @@ class BluetootManager2: NSObject, ObservableObject, CBCentralManagerDelegate, CB
 }
 
 struct DevicesView: View {
-    @ObservedObject var bluetooth: BluetoothManager
+    @EnvironmentObject var bluetooth: BluetoothManager
     @State var selectedPeripheral: DiscoveredPeripheral?
     @State var connectionState: ConnectionState = .Disconnected
+    @State var connectionObserver: Task<(), Never>?
 
     var body: some View {
         _DevicesView(
@@ -118,15 +74,18 @@ struct DevicesView: View {
             scanPeripherals: { self.bluetooth.scanPeripherals() },
             connectPeripheral: { peripheral in
                 self.selectedPeripheral = peripheral
-                self.connectionState = .Connecting
-                Task {
-                    self.connectionState = await self.bluetooth.connectPeripheral(peripheral.uuid)
+                self.connectionObserver = Task {
+                    for await state in self.bluetooth.connectPeripheral(peripheral.uuid) {
+                        self.connectionState = state
+                    }
                 }
             }
         )
         .sheet(
             item: $selectedPeripheral,
             onDismiss: {
+                // Cancel connection if peripheral is not being saved and still there is a selected peripheral
+                // Peripheral might be selected accidentally by user
                 if let selected = self.selectedPeripheral {
                     self.bluetooth.cancelConnection(selected.uuid)
                 }
@@ -134,20 +93,28 @@ struct DevicesView: View {
                 self.selectedPeripheral = nil
             }
         ) { peripheral in
-            SafeContainer(value: $selectedPeripheral) { selectedPeripheral in
-                _PeripheralConnectingView(
-                    connectionState: $connectionState,
-                    savePeripheral: {
-                        self.selectedPeripheral = nil
+            _PeripheralConnectingView(
+                peripheral: peripheral,
+                connectionState: $connectionState,
+                savePeripheral: { peripheral in
+                    self.connectionObserver?.cancel()
+                    self.connectionObserver = nil
+                    self.selectedPeripheral = nil
+
+                    do {
+                        try StorageViewModel.savePeripheral(peripheral)
+                    } catch {
+                        fatalError("Failed to save peripheral \(error)")
                     }
-                )
-            }
+                }
+            )
         }
         .onAppear {
             self.bluetooth.start()
         }
         .onDisappear {
             self.bluetooth.stopScanning()
+            self.connectionObserver?.cancel()
         }
     }
 }
@@ -170,7 +137,17 @@ private struct _DevicesView: View {
                     self.connectPeripheral(peripheral)
                 }) {
                     VStack(alignment: .leading, spacing: 4.0) {
-                        Text("\(title)")
+                        HStack {
+                            Text("\(title)")
+                            Spacer()
+                            if case .Connecting = peripheral.state {
+                                Text("Connecting")
+                                    .foregroundColor(.gray)
+                            } else if case .Connected = peripheral.state {
+                                Text("Connected")
+                                    .foregroundColor(.gray)
+                            }
+                        }
 
                         Text("\(peripheral.uuid)")
                             .foregroundColor(.gray)
@@ -217,27 +194,43 @@ private struct _DevicesView: View {
 }
 
 private struct _PeripheralConnectingView: View {
+    let peripheral: DiscoveredPeripheral
+
+    @State private var selectedKind: PeripheralKind? = .Foot
     @Binding var connectionState: ConnectionState
 
-    let savePeripheral: () -> ()
+    let savePeripheral: (SavedPeripheral) -> ()
 
     var body: some View {
-        switch connectionState {
-        case .Connected:
-            VStack {
-                Text("Connected")
-
-                Button(action: { savePeripheral() }) {
-                    Text("Save the peripheral")
+        VStack {
+            ForEach(PeripheralKind.allCases) { kind in
+                HStack {
+                    Image(systemName: selectedKind == kind ? "circle.inset.filled" : "circle")
+                    Text(kind.toString()).tag(kind)
+                }
+                .onTapGesture {
+                    selectedKind = kind
                 }
             }
-        case .Connecting:
-            Text("Connecting")
-        case .Failed(let reason):
-            Text("Failed to connect \(reason.message)")
-        case .Disconnected:
-            Text("Disconnected")
+            .padding(.bottom, 12)
+
+            switch connectionState {
+            case .Connected:
+                Text("Connected")
+
+                Button(action: { savePeripheral(SavedPeripheral(kind: self.selectedKind!, uuid: self.peripheral.uuid)) }) {
+                    Text("Save the peripheral")
+                }
+            case .Connecting:
+                Text("Connecting")
+            case .Failed(let reason):
+                Text("Failed to connect \(reason.message)")
+            case .Disconnected:
+                Text("Disconnected")
+            }
+
         }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -251,7 +244,7 @@ struct DevicesView_Previews: PreviewProvider {
             discoveredPeripherals: .constant([
                 "BT05": DiscoveredPeripheral(uuid: "ADFE20F46A11-8C6F-17B6-4756-C6D16E0F133B", name: "Gyro Sensor"),
                 "iPad": DiscoveredPeripheral(uuid: "8C7F30F46A11-8C6F-17B6-4756-C6D16E0F133B", name: "Comm Server"),
-                "iPhone": DiscoveredPeripheral(uuid: "C7D2430F46A11-8C6F-17B6-4756-C6D16E0F133B", name: "My Phone"),
+                "iPhone": DiscoveredPeripheral(uuid: "C7D2430F46A11-8C6F-17B6-4756-C6D16E0F133B", name: "My Phone", state: .Connecting),
             ]),
             stopScanning: { },
             scanPeripherals: { },
@@ -262,10 +255,12 @@ struct DevicesView_Previews: PreviewProvider {
             onDismiss: { }
         ) { _ in
             _PeripheralConnectingView(
+                peripheral: DiscoveredPeripheral(uuid: "UUID", name: "NAME"),
                 connectionState: .constant(.Connected),
-                savePeripheral: { }
+                savePeripheral: { _ in }
             )
         }
+        .environmentObject(BluetoothManager())
     }
 }
 

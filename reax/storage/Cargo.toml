@@ -10,6 +10,7 @@ base = { path = "../base" }
 
 bincode.workspace = true
 log.workspace = true
+once_cell.workspace = true
 serde.workspace = true
 sled.workspace = true
 tokio.workspace = true
