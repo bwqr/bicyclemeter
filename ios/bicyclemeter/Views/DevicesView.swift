@@ -1,84 +1,45 @@
 import CoreBluetooth
 import SwiftUI
 
-class BluetootManager2: NSObject, ObservableObject {
-    private var central: CBCentralManager
-    private var peripheral: CBPeripheral?
-    @Published var connected: Bool = false
 
-    init(_ central: CBCentralManager) {
-        self.central = central
-        super.init()
-    }
+private struct DiscoveredPeripheral: Identifiable {
+    let uuid: String
+    let name: String?
+    var state: CBPeripheralState
 
-    func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        print("Connected to the device")
-        self.connected = true
-        peripheral.discoverServices(nil)
-    }
-
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        print("Discovered services")
-        for service in peripheral.services ?? [] {
-            peripheral.discoverCharacteristics(nil, for: service)
-            print(hex(service.uuid.data))
-        }
-    }
-
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        print("Character for service \(service.uuid)")
-
-        if service.uuid.uuidString == "FFE0" {
-            print("Found desired service")
-            for character in service.characteristics ?? [] {
-                if character.uuid.uuidString == "FFE1" {
-                    print("Found desired characteristic")
-                    if character.properties.contains(.broadcast) {
-                        print("Character contains the prop broadcast")
-                    }
-                    if character.properties.contains(.read) {
-                        print("Character contains the prop read")
-                    }
-                    if character.properties.contains(.write) {
-                        print("Character contains the prop write")
-                    }
-                    if character.properties.contains(.notify) {
-                        print("Character contains the prop notify")
-                    }
-                    self.peripheral?.setNotifyValue(true, for: character)
-                }
-            }
-        }
-    }
-
-    func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-        print("Characteristic is updated")
-        if let value = characteristic.value {
-            print(String(decoding: value, as: UTF8.self))
-        }
+    var id: String {
+        get { self.uuid }
     }
 }
 
 struct DevicesView: View {
     @EnvironmentObject var bluetooth: BluetoothManager
-    @State var selectedPeripheral: DiscoveredPeripheral?
-    @State var connectionState: ConnectionState = .Disconnected
-    @State var connectionObserver: Task<(), Never>?
+    @State private var selectedPeripheral: DiscoveredPeripheral?
+    @State private var tasks: [Task<(), Never>] = []
 
     var body: some View {
         _DevicesView(
-            enabled: $bluetooth.enabled,
-            scanning: $bluetooth.scanning,
-            discoveredPeripherals: $bluetooth.discoveredPeripherals,
+            enabled: bluetooth.enabled,
+            scanning: bluetooth.scanning,
+            discoveredPeripherals: bluetooth.peripherals.map { peripheral in
+                DiscoveredPeripheral(
+                    uuid: peripheral.identifier.uuidString,
+                    name: peripheral.name,
+                    state: peripheral.state
+                )
+            },
             stopScanning: { self.bluetooth.stopScanning() },
             scanPeripherals: { self.bluetooth.scanPeripherals() },
             connectPeripheral: { peripheral in
                 self.selectedPeripheral = peripheral
-                self.connectionObserver = Task {
-                    for await state in self.bluetooth.connectPeripheral(peripheral.uuid) {
-                        self.connectionState = state
+                self.tasks.append(Task {
+                    switch await self.bluetooth.connectPeripheral(peripheral.uuid) {
+                    case .success(let state):
+                        self.selectedPeripheral?.state = state
+                    case .failure(let error):
+                        fatalError("Failed to connect to peripheral, \(error)")
                     }
-                }
+                })
             }
         )
         .sheet(
@@ -95,10 +56,7 @@ struct DevicesView: View {
         ) { peripheral in
             _PeripheralConnectingView(
                 peripheral: peripheral,
-                connectionState: $connectionState,
                 savePeripheral: { peripheral in
-                    self.connectionObserver?.cancel()
-                    self.connectionObserver = nil
                     self.selectedPeripheral = nil
 
                     do {
@@ -114,15 +72,18 @@ struct DevicesView: View {
         }
         .onDisappear {
             self.bluetooth.stopScanning()
-            self.connectionObserver?.cancel()
+
+            for task in tasks {
+                task.cancel()
+            }
         }
     }
 }
 
 private struct _DevicesView: View {
-    @Binding var enabled: Bool
-    @Binding var scanning: Bool
-    @Binding var discoveredPeripherals: [String:DiscoveredPeripheral]
+    let enabled: Bool
+    let scanning: Bool
+    let discoveredPeripherals: [DiscoveredPeripheral]
 
     let stopScanning: () -> ()
     let scanPeripherals: () -> ()
@@ -130,7 +91,7 @@ private struct _DevicesView: View {
 
     var body: some View {
         VStack(spacing: 8.0) {
-            List(self.discoveredPeripherals.values.sorted(by: <), id: \.self.uuid) { peripheral in
+            List(self.discoveredPeripherals) { peripheral in
                 let title = peripheral.name ?? "-"
 
                 Button(action: {
@@ -140,10 +101,10 @@ private struct _DevicesView: View {
                         HStack {
                             Text("\(title)")
                             Spacer()
-                            if case .Connecting = peripheral.state {
+                            if case .connecting = peripheral.state {
                                 Text("Connecting")
                                     .foregroundColor(.gray)
-                            } else if case .Connected = peripheral.state {
+                            } else if case .connected = peripheral.state {
                                 Text("Connected")
                                     .foregroundColor(.gray)
                             }
@@ -161,32 +122,21 @@ private struct _DevicesView: View {
                     Text("Please enable the bluetooth first")
                 }
 
-                if self.scanning {
-                    Button(action: {
+                Button(action: {
+                    if self.scanning {
                         self.stopScanning()
-                    }) {
-                        Text("Stop Scanning")
-                            .frame(maxWidth: .infinity)
-                            .foregroundColor(.white)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(12)
-                    .background(.red)
-                    .cornerRadius(8)
-                } else {
-                    Button(action: {
+                    } else {
                         self.scanPeripherals()
-                    }) {
-                        Text("Scan Peripherals")
-                            .frame(maxWidth: .infinity)
-                            .foregroundColor(.white)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(12)
-                    .background(self.enabled ? .blue : .gray)
-                    .cornerRadius(8)
-                    .disabled(!self.enabled)
+                }) {
+                    Text(self.scanning ? "Stop Scanning" : "Scan Peripherals")
+                        .frame(maxWidth: .infinity)
+                        .foregroundColor(.white)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(12)
+                .background(self.enabled ? (self.scanning ? .red : .blue) : .gray)
+                .cornerRadius(8)
             }
             .padding([.leading, .trailing, .bottom], 18)
         }
@@ -195,57 +145,92 @@ private struct _DevicesView: View {
 
 private struct _PeripheralConnectingView: View {
     let peripheral: DiscoveredPeripheral
+    let savePeripheral: (SavedPeripheral) -> ()
 
     @State private var selectedKind: PeripheralKind? = .Foot
-    @Binding var connectionState: ConnectionState
-
-    let savePeripheral: (SavedPeripheral) -> ()
 
     var body: some View {
         VStack {
-            ForEach(PeripheralKind.allCases) { kind in
-                HStack {
-                    Image(systemName: selectedKind == kind ? "circle.inset.filled" : "circle")
-                    Text(kind.toString()).tag(kind)
+            List {
+                Section {
+                    HStack {
+                        Text("State:")
+                        Spacer()
+
+                        switch peripheral.state {
+                        case .connected:
+                            Text("Connected")
+                        case .connecting:
+                            Text("Connecting")
+                        default:
+                            Text("Disconnected")
+                        }
+                    }
                 }
-                .onTapGesture {
-                    selectedKind = kind
+                Section {
+                    ForEach(PeripheralKind.allCases) { kind in
+                        HStack {
+                            Image(systemName: selectedKind == kind ? "circle.inset.filled" : "circle")
+                            Text(kind.toString()).tag(kind)
+                            Spacer()
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedKind = kind
+                        }
+                    }
                 }
             }
-            .padding(.bottom, 12)
 
-            switch connectionState {
-            case .Connected:
-                Text("Connected")
-
-                Button(action: { savePeripheral(SavedPeripheral(kind: self.selectedKind!, uuid: self.peripheral.uuid)) }) {
-                    Text("Save the peripheral")
+            if case .connected = peripheral.state {
+                Button(action: {
+                    savePeripheral(SavedPeripheral(
+                        kind: self.selectedKind!,
+                        uuid: self.peripheral.uuid
+                    ))
+                }) {
+                    Text("Save Peripheral")
+                        .foregroundColor(.white)
                 }
-            case .Connecting:
-                Text("Connecting")
-            case .Failed(let reason):
-                Text("Failed to connect \(reason.message)")
-            case .Disconnected:
-                Text("Disconnected")
+                .frame(maxWidth: .infinity)
+                .padding(12)
+                .background(.blue)
+                .cornerRadius(8)
+                .padding([.leading, .trailing, .bottom], 18)
             }
-
         }
         .frame(maxWidth: .infinity)
     }
 }
 
 struct DevicesView_Previews: PreviewProvider {
-    static let selectedPeripheral: DiscoveredPeripheral? = nil
+    private static let selectedPeripheral: DiscoveredPeripheral? = DiscoveredPeripheral(
+        uuid: "ADFE20F46A11-8C6F-17B6-4756-C6D16E0F133B",
+        name: "Gyro Sensor",
+        state: .connected
+    )
 
     static var previews: some View {
         _DevicesView(
-            enabled: .constant(false),
-            scanning: .constant(false),
-            discoveredPeripherals: .constant([
-                "BT05": DiscoveredPeripheral(uuid: "ADFE20F46A11-8C6F-17B6-4756-C6D16E0F133B", name: "Gyro Sensor"),
-                "iPad": DiscoveredPeripheral(uuid: "8C7F30F46A11-8C6F-17B6-4756-C6D16E0F133B", name: "Comm Server"),
-                "iPhone": DiscoveredPeripheral(uuid: "C7D2430F46A11-8C6F-17B6-4756-C6D16E0F133B", name: "My Phone", state: .Connecting),
-            ]),
+            enabled: false,
+            scanning: false,
+            discoveredPeripherals: [
+                DiscoveredPeripheral(
+                    uuid: "ADFE20F46A11-8C6F-17B6-4756-C6D16E0F133B",
+                    name: "Gyro Sensor",
+                    state: .connecting
+                ),
+                DiscoveredPeripheral(
+                    uuid: "8C7F30F46A11-8C6F-17B6-4756-C6D16E0F133B",
+                    name: "Comm Server",
+                    state: .disconnected
+                ),
+                DiscoveredPeripheral(
+                    uuid: "C7D2430F46A11-8C6F-17B6-4756-C6D16E0F133B",
+                    name: "My Phone",
+                    state: .connecting
+                ),
+            ],
             stopScanning: { },
             scanPeripherals: { },
             connectPeripheral: { _ in }
@@ -253,10 +238,9 @@ struct DevicesView_Previews: PreviewProvider {
         .sheet(
             item: .constant(Self.selectedPeripheral),
             onDismiss: { }
-        ) { _ in
+        ) { peripheral in
             _PeripheralConnectingView(
-                peripheral: DiscoveredPeripheral(uuid: "UUID", name: "NAME"),
-                connectionState: .constant(.Connected),
+                peripheral: peripheral,
                 savePeripheral: { _ in }
             )
         }

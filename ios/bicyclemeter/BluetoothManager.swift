@@ -1,12 +1,8 @@
 import CoreBluetooth
 import Serde
 
-struct BluetoothError: Error {
-    let message: String
-}
-
-enum ConnectionState {
-    case Disconnected, Connected, Connecting, Failed(BluetoothError)
+enum BluetoothError: Error {
+    case DeviceNotFound, Message(String)
 }
 
 enum PeripheralKind: UInt32, CaseIterable, Identifiable {
@@ -25,9 +21,7 @@ enum PeripheralKind: UInt32, CaseIterable, Identifiable {
     }
 
     func serialize(serializer: Serializer) throws {
-        try serializer.increase_container_depth()
         try serializer.serialize_variant_index(value: self.rawValue)
-        try serializer.decrease_container_depth()
     }
 
     func toString() -> String {
@@ -60,43 +54,14 @@ struct SavedPeripheral {
     }
 }
 
-struct DiscoveredPeripheral: Comparable, Identifiable {
-    static func == (lhs: DiscoveredPeripheral, rhs: DiscoveredPeripheral) -> Bool {
-        lhs.uuid == rhs.uuid
-    }
-
-    static func < (lhs: DiscoveredPeripheral, rhs: DiscoveredPeripheral) -> Bool {
-        lhs.uuid < rhs.uuid
-    }
-
-    let uuid: String
-    let name: String?
-    var state: ConnectionState
-
-    init(uuid: String, name: String?, state: ConnectionState) {
-        self.uuid = uuid
-        self.name = name
-        self.state = state
-    }
-
-    init(uuid: String, name: String?) {
-        self.init(uuid: uuid, name: name, state: .Disconnected)
-    }
-
-    var id: String {
-        get { self.uuid }
-    }
-}
-
 class BluetoothManager: NSObject, ObservableObject {
     private var central: CBCentralManager!
-    private var peripherals: [String:CBPeripheral] = [:]
-    private var connectionObservers: [String:AsyncStream<ConnectionState>.Continuation] = [:]
+    private var connectionObservers: [String:CheckedContinuation<Result<CBPeripheralState, BluetoothError>, Never>] = [:]
 
+    @Published private(set) var peripherals: [CBPeripheral] = []
 
     @Published var enabled = false
     @Published var scanning = false
-    @Published var discoveredPeripherals: [String:DiscoveredPeripheral] = [:]
 
     func start() {
         if self.central != nil {
@@ -114,39 +79,27 @@ class BluetoothManager: NSObject, ObservableObject {
     }
 
     func scanPeripherals() {
-        self.discoveredPeripherals = [:]
-        self.peripherals = [:]
+        self.peripherals = []
 
         self.scanning = true
         self.central.scanForPeripherals(withServices: nil)
     }
 
-    func connectPeripheral(_ uuid: String) -> AsyncStream<ConnectionState> {
-        self.discoveredPeripherals[uuid]?.state = .Connecting
-
-        self.central.connect(self.peripherals[uuid]!)
-
-        return AsyncStream { continuation in
-            self.connectionObservers[uuid] = continuation
-
-            continuation.yield(.Connecting)
-
-            continuation.onTermination = { _ in
-                self.connectionObservers.removeValue(forKey: uuid)
+    func connectPeripheral(_ uuid: String) async -> Result<CBPeripheralState, BluetoothError> {
+        return await withCheckedContinuation { continuation in
+            guard let peripheral = self.peripherals.first(where: { per in per.identifier.uuidString == uuid }) else {
+                continuation.resume(returning: .failure(.DeviceNotFound))
+                return
             }
+
+            self.central.connect(peripheral)
+            self.connectionObservers[uuid] = continuation
         }
     }
 
     func cancelConnection(_ uuid: String) {
-        self.discoveredPeripherals[uuid]?.state = .Disconnected
-
-        if let peripheral = self.peripherals[uuid] {
+        if let peripheral = self.peripherals.first(where: { per in per.identifier.uuidString == uuid }) {
             self.central.cancelPeripheralConnection(peripheral)
-        }
-
-        if let callback = self.connectionObservers[uuid] {
-            callback.yield(.Disconnected)
-            callback.finish()
         }
     }
 }
@@ -154,37 +107,36 @@ class BluetoothManager: NSObject, ObservableObject {
 extension BluetoothManager: CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         self.enabled = self.central.state == .poweredOn;
+        self.scanning = self.central.isScanning
     }
 
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-        self.discoveredPeripherals[peripheral.identifier.uuidString] = DiscoveredPeripheral(
-            uuid: peripheral.identifier.uuidString,
-            name: peripheral.name
-        )
-        self.peripherals[peripheral.identifier.uuidString] = peripheral
+        if !self.peripherals.contains(where: { per in per.identifier.uuidString == peripheral.identifier.uuidString }) {
+            self.peripherals.append(peripheral)
+        }
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        self.discoveredPeripherals[peripheral.identifier.uuidString]?.state = .Connected
-        if let continuation = self.connectionObservers[peripheral.identifier.uuidString] {
-            continuation.yield(.Connected)
+        self.objectWillChange.send()
+
+        if let continuation = self.connectionObservers.removeValue(forKey: peripheral.identifier.uuidString) {
+            continuation.resume(returning: .success(.connected))
         }
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-        self.discoveredPeripherals[peripheral.identifier.uuidString]?.state = .Failed(BluetoothError(message: String(describing: error)))
+        self.objectWillChange.send()
 
-        if let continuation = self.connectionObservers[peripheral.identifier.uuidString] {
-            continuation.yield(.Failed(BluetoothError(message: String(describing: error))))
+        if let continuation = self.connectionObservers.removeValue(forKey: peripheral.identifier.uuidString) {
+            continuation.resume(returning: .failure(.Message(String(describing: error))))
         }
     }
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-        self.discoveredPeripherals[peripheral.identifier.uuidString]?.state = .Disconnected
+        self.objectWillChange.send()
 
-        if let continuation = self.connectionObservers[peripheral.identifier.uuidString] {
-            continuation.yield(.Disconnected)
-            continuation.finish()
+        if let continuation = self.connectionObservers.removeValue(forKey: peripheral.identifier.uuidString) {
+            continuation.resume(returning: .success(.disconnected))
         }
     }
 }

@@ -4,13 +4,13 @@ import CoreBluetooth
 
 struct ContentView: View {
     let bluetooth = BluetoothManager()
+
     @ObservedObject var track: TrackManager
+    @State var showWelcomeView: Bool = false
 
     init() {
         self.track = TrackManager(bluetooth: self.bluetooth)
     }
-
-    @State var showWelcomeView: Bool = false
 
     var body: some View {
         _ContentView(tracking: $track.tracking)
@@ -83,5 +83,6 @@ struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         _ContentView(tracking: .constant(true))
             .environmentObject(BluetoothManager())
+            .environmentObject(TrackManager(bluetooth: BluetoothManager()))
     }
 }
