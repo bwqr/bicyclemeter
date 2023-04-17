@@ -5,15 +5,15 @@ struct CyclingView: View {
     @EnvironmentObject var track: TrackManager
 
     @State var tasks: [Task<(), Never>] = []
-    @State var peripherals: [SavedPeripheral] = []
-    @State var trackingTask: Task<(), Never>?
-    @State var rpm: Int32?
-    @State var speed: Int32?
+    @State var rpm: Float32?
+    @State var slope: Float32?
+    @State var speed: Float32?
 
     var body: some View {
         _CyclingView(
             tracking: track.tracking,
             rpm: self.rpm,
+            slope: self.slope,
             speed: self.speed,
             onToggleCycling: {
                 if self.track.tracking {
@@ -24,33 +24,53 @@ struct CyclingView: View {
             }
         )
         .onAppear {
+            self.startScanningTask()
+
             if self.track.tracking {
                 self.startTrackingTask()
             }
         }
         .onDisappear {
-            self.trackingTask?.cancel()
-            self.trackingTask = nil
+            for task in self.tasks {
+                task.cancel()
+            }
         }
     }
 
     func startTrackingTask() {
-        self.trackingTask = Task {
+        self.tasks.append(Task {
             for await value in self.track.startOrContinue() {
                 switch value {
                 case .RPM(let rpm):
                     self.rpm = rpm
+                case .Slope(let slope):
+                    self.slope = slope
+                case .Speed(let speed):
+                    self.speed = speed
                 }
             }
-        }
+        })
+    }
 
+    func startScanningTask() {
+        self.tasks.append(Task {
+            for await result in StorageViewModel.peripherals() {
+                switch result {
+                case .success(let peripherals):
+                    self.bluetooth.connectSavedPeripherals(peripherals)
+                case .failure(let error):
+                    fatalError("Failed to fetch peripherals, \(error)")
+                }
+            }
+        })
     }
 }
 
 private struct _CyclingView: View {
     let tracking: Bool
-    let rpm: Int32?
-    let speed: Int32?
+    let rpm: Float32?
+    let slope: Float32?
+    let speed: Float32?
     let onToggleCycling: () -> ()
 
     var body: some View {
@@ -87,8 +107,9 @@ struct CyclincView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             _CyclingView(
-                tracking: true,
+                tracking: false,
                 rpm: nil,
+                slope: nil,
                 speed: nil,
                 onToggleCycling: { }
             )

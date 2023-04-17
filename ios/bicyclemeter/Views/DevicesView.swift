@@ -16,20 +16,36 @@ struct DevicesView: View {
     @EnvironmentObject var bluetooth: BluetoothManager
     @State private var selectedPeripheral: DiscoveredPeripheral?
     @State private var tasks: [Task<(), Never>] = []
+    @State private var discoveredPeripherals: [DiscoveredPeripheral] = []
+    @State private var scanTask: Task<(), Never>?
+    @State private var stateTask: Task<(), Never>?
 
     var body: some View {
         _DevicesView(
             enabled: bluetooth.enabled,
-            scanning: bluetooth.scanning,
-            discoveredPeripherals: bluetooth.peripherals.map { peripheral in
-                DiscoveredPeripheral(
-                    uuid: peripheral.identifier.uuidString,
-                    name: peripheral.name,
-                    state: peripheral.state
-                )
+            scanning: self.scanTask != nil,
+            discoveredPeripherals: self.discoveredPeripherals,
+            stopScanning: {
+                self.scanTask?.cancel()
+                self.scanTask = nil
             },
-            stopScanning: { self.bluetooth.stopScanning() },
-            scanPeripherals: { self.bluetooth.scanPeripherals() },
+            scanPeripherals: {
+                self.scanTask = Task {
+                    self.discoveredPeripherals = []
+
+                    for await peripheral in self.bluetooth.scan() {
+                        if !self.discoveredPeripherals.contains(where: { p in p.uuid == peripheral.identifier.uuidString }) {
+                            self.discoveredPeripherals.append(
+                                DiscoveredPeripheral(
+                                    uuid: peripheral.identifier.uuidString,
+                                    name: peripheral.name,
+                                    state: peripheral.state
+                                )
+                            )
+                        }
+                    }
+                }
+            },
             connectPeripheral: { peripheral in
                 self.selectedPeripheral = peripheral
                 self.tasks.append(Task {
@@ -44,15 +60,7 @@ struct DevicesView: View {
         )
         .sheet(
             item: $selectedPeripheral,
-            onDismiss: {
-                // Cancel connection if peripheral is not being saved and still there is a selected peripheral
-                // Peripheral might be selected accidentally by user
-                if let selected = self.selectedPeripheral {
-                    self.bluetooth.cancelConnection(selected.uuid)
-                }
-
-                self.selectedPeripheral = nil
-            }
+            onDismiss: { }
         ) { peripheral in
             _PeripheralConnectingView(
                 peripheral: peripheral,
@@ -68,10 +76,20 @@ struct DevicesView: View {
             )
         }
         .onAppear {
-            self.bluetooth.start()
+            self.stateTask = Task {
+                for await (uuid, state) in self.bluetooth.observeState() {
+                    if let index = self.discoveredPeripherals.firstIndex(where: { p in p.uuid == uuid }) {
+                        self.discoveredPeripherals[index].state = state
+                    }
+                }
+            }
         }
         .onDisappear {
-            self.bluetooth.stopScanning()
+            self.scanTask?.cancel()
+            self.stateTask?.cancel()
+
+            self.scanTask = nil
+            self.stateTask = nil
 
             for task in tasks {
                 task.cancel()
@@ -190,6 +208,7 @@ private struct _PeripheralConnectingView: View {
                     ))
                 }) {
                     Text("Save Peripheral")
+                        .frame(maxWidth: .infinity)
                         .foregroundColor(.white)
                 }
                 .frame(maxWidth: .infinity)

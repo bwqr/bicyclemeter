@@ -1,7 +1,9 @@
 import CoreLocation
 
 enum TrackValue {
-    case RPM(Int32)
+    case RPM(Float32)
+    case Slope(Float32)
+    case Speed(Float32)
 }
 
 class TrackManager: ObservableObject {
@@ -11,8 +13,7 @@ class TrackManager: ObservableObject {
 
     private var location: CLLocationManager!
     private var continuations: [Int:AsyncStream<TrackValue>.Continuation] = [:]
-    private var peripheralsTask: Task<(), Never>?
-    private var timer: Timer?
+    private var observerTask: Task<(), Never>?
 
     init(bluetooth: BluetoothManager) {
         self.bluetooth = bluetooth
@@ -23,33 +24,19 @@ class TrackManager: ObservableObject {
             self.location = CLLocationManager()
         }
 
-        self.timer = Timer(timeInterval: 2.0, repeats: true) { _ in
-            for cont in self.continuations.values {
-                cont.yield(.RPM(Int32.random(in: 0...1024)))
-            }
-        }
-        RunLoop.current.add(self.timer!, forMode: .default)
-
-        if self.peripheralsTask == nil {
-            self.peripheralsTask = Task {
-                var previousPeriphs: [SavedPeripheral] = []
-
-                for await result in StorageViewModel.peripherals() {
-                    for prev in previousPeriphs {
-                        self.bluetooth.cancelConnection(prev.uuid)
+        if self.observerTask == nil {
+            self.observerTask = Task {
+                for await res in self.bluetooth.subscribe() {
+                    var value = TrackValue.RPM(0)
+                    switch res.0 {
+                    case .Bicycle:
+                        value = .Slope(Float32.random(in: 0.0...1024.0))
+                    case .Foot:
+                        value = .RPM(Float32.random(in: 0.0...1024.0))
                     }
 
-                    switch result {
-                    case .success(let peripherals):
-                        previousPeriphs = peripherals
-
-                        for periph in peripherals {
-                            if case .failure(let error) =  await self.bluetooth.connectPeripheral(periph.uuid) {
-                                print("Failed to connect to peripheral \(periph.uuid) in TrackManager, \(error)")
-                            }
-                        }
-                    case .failure(let error):
-                        fatalError("Failed to fetch peripherals \(error)")
+                    for cont in self.continuations.values {
+                        cont.yield(value)
                     }
                 }
             }
@@ -76,13 +63,11 @@ class TrackManager: ObservableObject {
         for cont in self.continuations.values {
             cont.finish()
         }
-        self.peripheralsTask?.cancel()
-        self.timer?.invalidate()
+        self.observerTask?.cancel()
 
         self.continuations = [:]
         self.location = nil
         self.tracking = false
-        self.peripheralsTask = nil
-        self.timer = nil
+        self.observerTask = nil
     }
 }

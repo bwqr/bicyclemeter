@@ -24,6 +24,7 @@
 		8455A77F29EABF3300D71986 /* BluetoothManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8455A77E29EABF3300D71986 /* BluetoothManager.swift */; };
 		84622AD829D32DF900BC4F1E /* DevicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84622AD729D32DF900BC4F1E /* DevicesView.swift */; };
 		846243E429D06A30009F4314 /* TraitHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846243E329D06A30009F4314 /* TraitHelpers.swift */; };
+		847C008629ED87B8009248CC /* Peripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847C008529ED87B8009248CC /* Peripheral.swift */; };
 		8481D0CD29BF17080078C13A /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8481D0CC29BF17080078C13A /* CoreBluetooth.framework */; };
 		84928ABA29BE09D500ACB297 /* libreax.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 84928AB929BE09C900ACB297 /* libreax.a */; };
 		84928ABC29BE1DE600ACB297 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84928ABB29BE1DE600ACB297 /* CoreLocation.framework */; };
@@ -79,6 +80,7 @@
 		8455A77E29EABF3300D71986 /* BluetoothManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothManager.swift; sourceTree = "<group>"; };
 		84622AD729D32DF900BC4F1E /* DevicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicesView.swift; sourceTree = "<group>"; };
 		846243E329D06A30009F4314 /* TraitHelpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TraitHelpers.swift; sourceTree = "<group>"; };
+		847C008529ED87B8009248CC /* Peripheral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Peripheral.swift; sourceTree = "<group>"; };
 		8481D0CC29BF17080078C13A /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		84928AB929BE09C900ACB297 /* libreax.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libreax.a; path = "../../../Users/eerie/projects/tmp/bicyclemeter/x86_64-apple-ios/debug/libreax.a"; sourceTree = "<group>"; };
 		84928ABB29BE1DE600ACB297 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
@@ -207,6 +209,7 @@
 			children = (
 				84B324CE29D1F6180096ADA5 /* Track.swift */,
 				842E021E29C50A1A00F26D82 /* Error.swift */,
+				847C008529ED87B8009248CC /* Peripheral.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -405,6 +408,7 @@
 				846243E429D06A30009F4314 /* TraitHelpers.swift in Sources */,
 				84512B7629C60436005F290E /* WelcomeView.swift in Sources */,
 				8405F08C29BD12B6002CD175 /* ContentView.swift in Sources */,
+				847C008629ED87B8009248CC /* Peripheral.swift in Sources */,
 				8404E44F29EC486300C3495C /* TrackManager.swift in Sources */,
 				842E021C29C508DD00F26D82 /* Runtime.swift in Sources */,
 				8405F08A29BD12B6002CD175 /* bicyclemeterApp.swift in Sources */,
