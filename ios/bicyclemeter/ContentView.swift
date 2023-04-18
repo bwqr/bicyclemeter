@@ -7,13 +7,14 @@ struct ContentView: View {
 
     @ObservedObject var track: TrackManager
     @State var showWelcomeView: Bool = false
+    @State var connectionTask: Task<(), Never>?
 
     init() {
         self.track = TrackManager(bluetooth: self.bluetooth)
     }
 
     var body: some View {
-        _ContentView(tracking: $track.tracking)
+        _ContentView(tracking: track.tracking)
         .sheet(isPresented: $showWelcomeView) {
             WelcomeView {
                 do {
@@ -27,17 +28,34 @@ struct ContentView: View {
         .environmentObject(self.bluetooth)
         .environmentObject(self.track)
         .onAppear {
+            self.connectionTask = Task {
+                for await result in StorageViewModel.peripherals() {
+                    switch result {
+                    case .success(let peripherals):
+                        self.bluetooth.connectToSavedPeripherals(peripherals)
+                    case .failure(let error):
+                        fatalError("Failed to fetch peripherals, \(error)")
+                    }
+                }
+
+                self.connectionTask = nil
+            }
+
             do {
                 showWelcomeView = !(try StorageViewModel.welcomeShown())
             } catch {
                 fatalError("Unhandled error \(error)")
             }
         }
+        .onDisappear {
+            self.connectionTask?.cancel()
+            self.connectionTask = nil
+        }
     }
 }
 
 private struct _ContentView: View {
-    @Binding var tracking: Bool
+    let tracking: Bool
 
     var body: some View {
         NavigationView {
@@ -81,7 +99,7 @@ private struct _ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        _ContentView(tracking: .constant(true))
+        _ContentView(tracking: true)
             .environmentObject(BluetoothManager())
             .environmentObject(TrackManager(bluetooth: BluetoothManager()))
     }

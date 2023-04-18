@@ -1,3 +1,4 @@
+import CoreBluetooth
 import Serde
 
 enum PeripheralKind: UInt32, CaseIterable, Identifiable {
@@ -31,11 +32,18 @@ enum PeripheralKind: UInt32, CaseIterable, Identifiable {
 
 struct SavedPeripheral {
     let kind: PeripheralKind
-    let uuid: String
+    let uuid: UUID
+
+    static func fromPeripheral(_ kind: PeripheralKind, _ peripheral: CBPeripheral) -> Self {
+        return SavedPeripheral(kind: kind, uuid: peripheral.identifier)
+    }
 
     static func deserialize(_ deserializer: Deserializer) throws -> Self {
         try deserializer.increase_container_depth()
-        let peripheral = SavedPeripheral(kind: try PeripheralKind.deserialize(deserializer), uuid: try deserializer.deserialize_str())
+        let peripheral = SavedPeripheral(
+            kind: try PeripheralKind.deserialize(deserializer),
+            uuid: try UUID(uuidString: deserializer.deserialize_str())!
+        )
         try deserializer.decrease_container_depth()
 
         return peripheral
@@ -44,7 +52,7 @@ struct SavedPeripheral {
     func serialize(serializer: Serializer) throws {
         try serializer.increase_container_depth()
         try self.kind.serialize(serializer: serializer)
-        try serializer.serialize_str(value: self.uuid)
+        try serializer.serialize_str(value: self.uuid.uuidString)
         try serializer.decrease_container_depth()
     }
 }

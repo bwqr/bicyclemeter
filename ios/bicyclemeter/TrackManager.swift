@@ -11,32 +11,68 @@ class TrackManager: ObservableObject {
 
     private let bluetooth: BluetoothManager
 
-    private var location: CLLocationManager!
+    private var location: CLLocationManager?
     private var continuations: [Int:AsyncStream<TrackValue>.Continuation] = [:]
     private var observerTask: Task<(), Never>?
+    private var timer: Timer?
+    private var accel: Vec3<Double>?
+    private var gyro: Vec3<Double>?
 
     init(bluetooth: BluetoothManager) {
         self.bluetooth = bluetooth
     }
 
     func startOrContinue() -> AsyncStream<TrackValue> {
-        if self.location == nil {
+
+        if !self.tracking {
+            do {
+                try StorageViewModel.startTrack()
+            } catch {
+                fatalError("Failed to start track \(error)")
+            }
+
             self.location = CLLocationManager()
-        }
 
-        if self.observerTask == nil {
+            self.timer = Timer(timeInterval: 0.5, repeats: true) { _ in
+                do {
+                    try StorageViewModel.storeTrackValue(
+                        TrackData(
+                            accelerometer: self.accel ?? Vec3(x: 0.0, y: 0.0, z: 0.0),
+                            gyro: self.gyro ?? Vec3(x: 0.0, y: 0.0, z: 0.0),
+                            speed: 0.0
+                        )
+                    )
+
+                    self.accel = nil
+                    self.gyro = nil
+                } catch {
+                    fatalError("Failed to store track value \(error)")
+                }
+            }
+
             self.observerTask = Task {
-                for await res in self.bluetooth.subscribe() {
-                    var value = TrackValue.RPM(0)
-                    switch res.0 {
-                    case .Bicycle:
-                        value = .Slope(Float32.random(in: 0.0...1024.0))
-                    case .Foot:
-                        value = .RPM(Float32.random(in: 0.0...1024.0))
+                for await (kind, data) in self.bluetooth.subscribe() {
+                    if data.count != 13 {
+                        print("Received data does not have enough bytes, \(data.count)")
+                        continue
                     }
-
-                    for cont in self.continuations.values {
-                        cont.yield(value)
+                    switch kind {
+                    case .Bicycle:
+                        // We only want the accel values when the kind is .Bicycle
+                        // to obtain slope
+                        self.accel = Vec3(
+                            x: Double(Int16(data[0]) << 8 + Int16(data[1])),
+                            y: Double(Int16(data[2]) << 8 + Int16(data[3])),
+                            z: Double(Int16(data[4]) << 8 + Int16(data[5]))
+                        )
+                    case .Foot:
+                        // We only want the gyro values when the kind is .Foot
+                        // to obtain RPM
+                        self.gyro = Vec3(
+                            x: Double(Int16(data[6]) << 8 + Int16(data[7])),
+                            y: Double(Int16(data[8]) << 8 + Int16(data[9])),
+                            z: Double(Int16(data[10]) << 8 + Int16(data[11]))
+                        )
                     }
                 }
             }
@@ -64,10 +100,19 @@ class TrackManager: ObservableObject {
             cont.finish()
         }
         self.observerTask?.cancel()
+        self.timer?.invalidate()
 
         self.continuations = [:]
         self.location = nil
-        self.tracking = false
         self.observerTask = nil
+        self.timer = nil
+
+        do {
+            try StorageViewModel.stopTrack()
+        } catch {
+            fatalError("Failed to stop track \(error)")
+        }
+
+        self.tracking = false
     }
 }

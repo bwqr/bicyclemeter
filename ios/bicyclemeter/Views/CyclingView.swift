@@ -24,8 +24,6 @@ struct CyclingView: View {
             }
         )
         .onAppear {
-            self.startScanningTask()
-
             if self.track.tracking {
                 self.startTrackingTask()
             }
@@ -51,19 +49,6 @@ struct CyclingView: View {
             }
         })
     }
-
-    func startScanningTask() {
-        self.tasks.append(Task {
-            for await result in StorageViewModel.peripherals() {
-                switch result {
-                case .success(let peripherals):
-                    self.bluetooth.connectSavedPeripherals(peripherals)
-                case .failure(let error):
-                    fatalError("Failed to fetch peripherals, \(error)")
-                }
-            }
-        })
-    }
 }
 
 private struct _CyclingView: View {
@@ -79,8 +64,14 @@ private struct _CyclingView: View {
                 Text("RPM \(self.rpm ?? 0)")
                     .frame(maxWidth: .infinity, alignment: .leading)
 
+                Text("Slope \(self.slope ?? 0)")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            HStack {
                 Text("Speed \(self.speed ?? 0)")
                     .frame(maxWidth: .infinity, alignment: .leading)
+
             }
 
             Spacer()

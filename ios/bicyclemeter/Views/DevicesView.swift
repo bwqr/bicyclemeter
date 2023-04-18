@@ -3,28 +3,36 @@ import SwiftUI
 
 
 private struct DiscoveredPeripheral: Identifiable {
-    let uuid: String
+    let uuid: UUID
     let name: String?
     var state: CBPeripheralState
 
-    var id: String {
+    static func from(peripheral: CBPeripheral) -> Self {
+        return DiscoveredPeripheral(uuid: peripheral.identifier, name: peripheral.name, state: peripheral.state)
+    }
+
+    var id: UUID {
         get { self.uuid }
     }
 }
 
 struct DevicesView: View {
     @EnvironmentObject var bluetooth: BluetoothManager
+    @State private var savedPeripherals: [(PeripheralKind, DiscoveredPeripheral)] = []
     @State private var selectedPeripheral: DiscoveredPeripheral?
-    @State private var tasks: [Task<(), Never>] = []
-    @State private var discoveredPeripherals: [DiscoveredPeripheral] = []
+    @State private var discoveredPeripherals: [CBPeripheral] = []
     @State private var scanTask: Task<(), Never>?
+    @State private var peripheralsTask: Task<(), Never>?
     @State private var stateTask: Task<(), Never>?
 
     var body: some View {
         _DevicesView(
             enabled: bluetooth.enabled,
             scanning: self.scanTask != nil,
-            discoveredPeripherals: self.discoveredPeripherals,
+            savedPeripherals: self.savedPeripherals,
+            discoveredPeripherals: self.discoveredPeripherals.map { peripheral in
+                DiscoveredPeripheral.from(peripheral: peripheral)
+            },
             stopScanning: {
                 self.scanTask?.cancel()
                 self.scanTask = nil
@@ -34,28 +42,21 @@ struct DevicesView: View {
                     self.discoveredPeripherals = []
 
                     for await peripheral in self.bluetooth.scan() {
-                        if !self.discoveredPeripherals.contains(where: { p in p.uuid == peripheral.identifier.uuidString }) {
-                            self.discoveredPeripherals.append(
-                                DiscoveredPeripheral(
-                                    uuid: peripheral.identifier.uuidString,
-                                    name: peripheral.name,
-                                    state: peripheral.state
-                                )
-                            )
+                        if !self.discoveredPeripherals.contains(where: { p in p.identifier.uuidString == peripheral.identifier.uuidString }) {
+                            self.discoveredPeripherals.append(peripheral)
                         }
-                    }
+                   }
+
+                    self.scanTask = nil
                 }
             },
             connectPeripheral: { peripheral in
                 self.selectedPeripheral = peripheral
-                self.tasks.append(Task {
-                    switch await self.bluetooth.connectPeripheral(peripheral.uuid) {
-                    case .success(let state):
-                        self.selectedPeripheral?.state = state
-                    case .failure(let error):
-                        fatalError("Failed to connect to peripheral, \(error)")
-                    }
-                })
+                do {
+                    try self.bluetooth.connectPeripheral(peripheral.uuid)
+                } catch {
+                    fatalError("Failed to connect to peripheral, \(error)")
+                }
             }
         )
         .sheet(
@@ -76,23 +77,58 @@ struct DevicesView: View {
             )
         }
         .onAppear {
-            self.stateTask = Task {
-                for await (uuid, state) in self.bluetooth.observeState() {
-                    if let index = self.discoveredPeripherals.firstIndex(where: { p in p.uuid == uuid }) {
-                        self.discoveredPeripherals[index].state = state
+            self.peripheralsTask = Task {
+                for await result in StorageViewModel.peripherals() {
+                    switch result {
+                    case .success(let peripherals):
+                        self.savedPeripherals = self.bluetooth.retrievePeripherals( peripherals.map { $0.uuid } )
+                            .map { p in
+                                (peripherals.first(where: { savedPeriph in savedPeriph.uuid == p.identifier })!.kind, DiscoveredPeripheral.from(peripheral: p))
+                            }
+                    case .failure(let error):
+                        fatalError("Failed to fetch peripherals, \(error)")
                     }
                 }
+
+                self.peripheralsTask = nil
             }
+
+            self.stateTask = Task {
+
+                for await peripheral in self.bluetooth.states() {
+                    if let index = self.discoveredPeripherals.firstIndex(where: { $0.identifier == peripheral.identifier }) {
+                        self.discoveredPeripherals.remove(at: index)
+                        self.discoveredPeripherals.insert(peripheral, at: index)
+                    }
+
+                    if let index = self.savedPeripherals.firstIndex(where: { $0.1.uuid == peripheral.identifier }) {
+                        let (kind, _) = self.savedPeripherals.remove(at: index)
+                        self.savedPeripherals.insert((kind, DiscoveredPeripheral.from(peripheral: peripheral)), at: index)
+                    }
+
+                    if self.selectedPeripheral?.uuid == peripheral.identifier {
+                        self.selectedPeripheral = DiscoveredPeripheral.from(peripheral: peripheral)
+                    }
+                }
+
+                self.stateTask = nil
+            }
+
         }
         .onDisappear {
             self.scanTask?.cancel()
             self.stateTask?.cancel()
+            self.peripheralsTask?.cancel()
 
             self.scanTask = nil
             self.stateTask = nil
+            self.peripheralsTask = nil
 
-            for task in tasks {
-                task.cancel()
+            for peripheral in self.discoveredPeripherals {
+                if !self.savedPeripherals.contains(where: { $0.1.uuid == peripheral.identifier }) &&
+                    (peripheral.state == .connected || peripheral.state == .connecting) {
+                    self.bluetooth.cancelConnection(peripheral)
+                }
             }
         }
     }
@@ -101,6 +137,7 @@ struct DevicesView: View {
 private struct _DevicesView: View {
     let enabled: Bool
     let scanning: Bool
+    let savedPeripherals: [(PeripheralKind, DiscoveredPeripheral)]
     let discoveredPeripherals: [DiscoveredPeripheral]
 
     let stopScanning: () -> ()
@@ -109,28 +146,56 @@ private struct _DevicesView: View {
 
     var body: some View {
         VStack(spacing: 8.0) {
-            List(self.discoveredPeripherals) { peripheral in
-                let title = peripheral.name ?? "-"
-
-                Button(action: {
-                    self.connectPeripheral(peripheral)
-                }) {
-                    VStack(alignment: .leading, spacing: 4.0) {
-                        HStack {
-                            Text("\(title)")
-                            Spacer()
-                            if case .connecting = peripheral.state {
-                                Text("Connecting")
-                                    .foregroundColor(.gray)
-                            } else if case .connected = peripheral.state {
-                                Text("Connected")
-                                    .foregroundColor(.gray)
+            List {
+                if !self.savedPeripherals.isEmpty {
+                    Section("Saved Sensors") {
+                        ForEach(self.savedPeripherals, id: \.self.1.uuid) { (kind, peripheral) in
+                            HStack {
+                                Text(peripheral.name ?? "-")
+                                Spacer()
+                                switch peripheral.state {
+                                case .connected:
+                                    Text("Connected")
+                                        .foregroundColor(.gray)
+                                case .connecting:
+                                    Text("Connecting")
+                                        .foregroundColor(.gray)
+                                default:
+                                    Text("Disconnected")
+                                        .foregroundColor(.gray)
+                                }
                             }
                         }
+                    }
+                }
 
-                        Text("\(peripheral.uuid)")
-                            .foregroundColor(.gray)
-                            .font(.subheadline)
+                if !self.discoveredPeripherals.isEmpty || self.scanning {
+                    Section("Discovered Sensors") {
+                        ForEach(self.discoveredPeripherals) { peripheral in
+                            let title = peripheral.name ?? "-"
+
+                            Button(action: {
+                                self.connectPeripheral(peripheral)
+                            }) {
+                                VStack(alignment: .leading, spacing: 4.0) {
+                                    HStack {
+                                        Text("\(title)")
+                                        Spacer()
+                                        if case .connecting = peripheral.state {
+                                            Text("Connecting")
+                                                .foregroundColor(.gray)
+                                        } else if case .connected = peripheral.state {
+                                            Text("Connected")
+                                                .foregroundColor(.gray)
+                                        }
+                                    }
+
+                                    Text("\(peripheral.uuid)")
+                                        .foregroundColor(.gray)
+                                        .font(.subheadline)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -147,7 +212,7 @@ private struct _DevicesView: View {
                         self.scanPeripherals()
                     }
                 }) {
-                    Text(self.scanning ? "Stop Scanning" : "Scan Peripherals")
+                    Text(self.scanning ? "Stop Scanning" : "Scan Sensors")
                         .frame(maxWidth: .infinity)
                         .foregroundColor(.white)
                 }
@@ -155,9 +220,11 @@ private struct _DevicesView: View {
                 .padding(12)
                 .background(self.enabled ? (self.scanning ? .red : .blue) : .gray)
                 .cornerRadius(8)
+                .disabled(!self.enabled)
             }
             .padding([.leading, .trailing, .bottom], 18)
         }
+        .navigationTitle("Sensors")
     }
 }
 
@@ -224,7 +291,7 @@ private struct _PeripheralConnectingView: View {
 
 struct DevicesView_Previews: PreviewProvider {
     private static let selectedPeripheral: DiscoveredPeripheral? = DiscoveredPeripheral(
-        uuid: "ADFE20F46A11-8C6F-17B6-4756-C6D16E0F133B",
+        uuid: UUID(uuidString: "ADFE20F46A11-8C6F-17B6-4756-C6D16E0F133B")!,
         name: "Gyro Sensor",
         state: .connected
     )
@@ -233,19 +300,37 @@ struct DevicesView_Previews: PreviewProvider {
         _DevicesView(
             enabled: false,
             scanning: false,
+            savedPeripherals: [
+                (
+                    .Bicycle,
+                    DiscoveredPeripheral(
+                        uuid: UUID(uuidString: "4B57DF7D-BBCC-EF74-502B-614F07E6BA0C")!,
+                        name: "Accel Sensor",
+                        state: .disconnected
+                    )
+                ),
+                (
+                    .Foot,
+                    DiscoveredPeripheral(
+                        uuid: UUID(uuidString: "DDEE7C5D-9D1C-96A5-C5F9-A23E18A5CDEB")!,
+                        name: "Gyro Sensors",
+                        state: .connected
+                    )
+                )
+            ],
             discoveredPeripherals: [
                 DiscoveredPeripheral(
-                    uuid: "ADFE20F46A11-8C6F-17B6-4756-C6D16E0F133B",
+                    uuid: UUID(uuidString: "8C2AD3F6-2983-1A25-A030-3DCC954E4550")!,
                     name: "Gyro Sensor",
                     state: .connecting
                 ),
                 DiscoveredPeripheral(
-                    uuid: "8C7F30F46A11-8C6F-17B6-4756-C6D16E0F133B",
+                    uuid: UUID(uuidString: "6AAF3F2C-568D-0412-8CCF-BC81C018276B")!,
                     name: "Comm Server",
                     state: .disconnected
                 ),
                 DiscoveredPeripheral(
-                    uuid: "C7D2430F46A11-8C6F-17B6-4756-C6D16E0F133B",
+                    uuid: UUID(uuidString: "A5F3E877-1D93-BE7C-9021-BD92F888A310")!,
                     name: "My Phone",
                     state: .connecting
                 ),
@@ -255,7 +340,7 @@ struct DevicesView_Previews: PreviewProvider {
             connectPeripheral: { _ in }
         )
         .sheet(
-            item: .constant(Self.selectedPeripheral),
+            item: .constant(nil as DiscoveredPeripheral?),
             onDismiss: { }
         ) { peripheral in
             _PeripheralConnectingView(
@@ -264,12 +349,5 @@ struct DevicesView_Previews: PreviewProvider {
             )
         }
         .environmentObject(BluetoothManager())
-    }
-}
-
-private func hex(_ data: Data) -> String {
-    return data.reduce(into: "") { result, byte in
-        result.append(String(byte >> 4, radix: 16))
-        result.append(String(byte & 0x0f, radix: 16))
     }
 }
