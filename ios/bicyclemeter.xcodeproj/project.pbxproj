@@ -24,6 +24,7 @@
 		8455A77F29EABF3300D71986 /* BluetoothManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8455A77E29EABF3300D71986 /* BluetoothManager.swift */; };
 		84622AD829D32DF900BC4F1E /* DevicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84622AD729D32DF900BC4F1E /* DevicesView.swift */; };
 		846243E429D06A30009F4314 /* TraitHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846243E329D06A30009F4314 /* TraitHelpers.swift */; };
+		84627A402A030B9E000FF7AE /* HistoryChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84627A3F2A030B9E000FF7AE /* HistoryChartView.swift */; };
 		847C008629ED87B8009248CC /* Peripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847C008529ED87B8009248CC /* Peripheral.swift */; };
 		8481D0CD29BF17080078C13A /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8481D0CC29BF17080078C13A /* CoreBluetooth.framework */; };
 		84928ABA29BE09D500ACB297 /* libreax.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 84928AB929BE09C900ACB297 /* libreax.a */; };
@@ -80,6 +81,7 @@
 		8455A77E29EABF3300D71986 /* BluetoothManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothManager.swift; sourceTree = "<group>"; };
 		84622AD729D32DF900BC4F1E /* DevicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicesView.swift; sourceTree = "<group>"; };
 		846243E329D06A30009F4314 /* TraitHelpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TraitHelpers.swift; sourceTree = "<group>"; };
+		84627A3F2A030B9E000FF7AE /* HistoryChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryChartView.swift; sourceTree = "<group>"; };
 		847C008529ED87B8009248CC /* Peripheral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Peripheral.swift; sourceTree = "<group>"; };
 		8481D0CC29BF17080078C13A /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		84928AB929BE09C900ACB297 /* libreax.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libreax.a; path = "../../../Users/eerie/projects/tmp/bicyclemeter/x86_64-apple-ios/debug/libreax.a"; sourceTree = "<group>"; };
@@ -222,6 +224,7 @@
 				84512B7529C60436005F290E /* WelcomeView.swift */,
 				84512B7729C605C6005F290E /* CyclingView.swift */,
 				84622AD729D32DF900BC4F1E /* DevicesView.swift */,
+				84627A3F2A030B9E000FF7AE /* HistoryChartView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -412,6 +415,7 @@
 				8404E44F29EC486300C3495C /* TrackManager.swift in Sources */,
 				842E021C29C508DD00F26D82 /* Runtime.swift in Sources */,
 				8405F08A29BD12B6002CD175 /* bicyclemeterApp.swift in Sources */,
+				84627A402A030B9E000FF7AE /* HistoryChartView.swift in Sources */,
 				84512B7829C605C6005F290E /* CyclingView.swift in Sources */,
 				8455A77F29EABF3300D71986 /* BluetoothManager.swift in Sources */,
 				84512B7329C5CE84005F290E /* StorageViewModel.swift in Sources */,
@@ -578,6 +582,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CARGO_TARGET_DIR = /Users/eerie/projects/tmp/bicyclemeter;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"bicyclemeter/Preview Content\"";
@@ -616,6 +621,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bwqr.bicyclemeter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = ../reax/ios/src/reax.h;
 				SWIFT_VERSION = 5.0;
@@ -629,6 +635,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CARGO_TARGET_DIR = /Users/eerie/projects/tmp/bicyclemeter;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"bicyclemeter/Preview Content\"";
@@ -667,6 +674,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bwqr.bicyclemeter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = ../reax/ios/src/reax.h;
 				SWIFT_VERSION = 5.0;

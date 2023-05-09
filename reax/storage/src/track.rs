@@ -2,7 +2,7 @@ use std::{io::Write, sync::Arc};
 
 use base::Config;
 
-use crate::{Error, models::{Track, TrackHeader, TrackData}};
+use crate::{Error, models::{Track, TrackHeader, TrackPoint}};
 
 const FILE_SCHEME_VERSION: i32 = 1;
 
@@ -73,10 +73,10 @@ pub fn delete_track(timestampt: i64) -> Result<(), Error> {
         .map_err(|e| Error::Message(format!("IO error {e:?}")))
 }
 
-pub fn store_track_value(track_data: TrackData) -> Result<(), Error> {
+pub fn store_track_point(point: TrackPoint) -> Result<(), Error> {
     let lock = TRACK_FILE.lock().unwrap();
 
-    log::debug!("received track_data {track_data:?}");
+    log::debug!("received track_data {point:?}");
 
     let mut track_file = &lock
         .as_ref()
@@ -84,7 +84,7 @@ pub fn store_track_value(track_data: TrackData) -> Result<(), Error> {
         .0;
 
     track_file
-        .write(&bincode::serialize(&bincode::serialize(&track_data).unwrap()).unwrap())
+        .write(&bincode::serialize(&bincode::serialize(&point).unwrap()).unwrap())
         .map(|_| ())
         .map_err(|e| Error::Message(format!("{e:?}")))
 }
@@ -103,11 +103,11 @@ pub fn track(timestamp: i64) -> Result<Track, Error> {
 
     let file = std::fs::File::open(format!("{}/tracks/{}", config.storage_dir, timestamp))?;
     let header = bincode::deserialize_from::<_, TrackHeader>(&file).unwrap();
-    let mut track_data = Vec::new();
+    let mut points = Vec::new();
 
-    while let Ok(data) = bincode::deserialize_from::<_, TrackData>(&file) {
-        track_data.push(data);
+    while let Ok(data) = bincode::deserialize_from::<_, TrackPoint>(&file) {
+        points.push(data);
     }
 
-    Ok(Track { header, data: track_data })
+    Ok(Track { header, points })
 }

@@ -13,7 +13,7 @@ struct TrackView: View {
             if let t = track {
                 Button(action: {
                     do {
-                        try StorageViewModel.deleteTrack(timestamp)
+                        try TrackViewModel.deleteTrack(timestamp)
                     } catch {
                         fatalError("Failed to delete track \(error)")
                     }
@@ -21,12 +21,7 @@ struct TrackView: View {
                     Text("Delete the Track")
                 })
 
-                Text("\(t.header.version) \(t.header.timestamp) \(t.data.count)")
-
-                ForEach(t.data, id: \.self.speed) { data in
-                    Text("\(data.speed)")
-                }
-
+                Text("\(t.header.version) \(t.header.timestamp) \(t.points.count)")
             }
         }
             .onAppear {

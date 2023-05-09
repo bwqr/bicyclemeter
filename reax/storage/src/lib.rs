@@ -61,30 +61,8 @@ pub async fn peripherals() -> tokio::sync::watch::Receiver<State<Vec<SavedPeriph
 
     if load {
         let db = base::get::<Arc<sled::Db>>();
-        let read_kind = |kind: PeripheralKind| -> Option<SavedPeripheral> {
-            if let Ok(Some(ivec)) = db.get(format!(
-                "peripheral_{}",
-                Into::<&'static str>::into(&kind)
-            )) {
-                Some(SavedPeripheral {
-                    kind,
-                    uuid: std::str::from_utf8(&ivec).unwrap().to_string(),
-                })
-            } else {
-                None
-            }
-        };
 
-        let mut saved_peripherals = vec![];
-
-        if let Some(saved_peripheral) = read_kind(PeripheralKind::Bicycle) {
-            saved_peripherals.push(saved_peripheral);
-        }
-        if let Some(saved_peripheral) = read_kind(PeripheralKind::Foot) {
-            saved_peripherals.push(saved_peripheral);
-        }
-
-        sender.send_replace(State::Ok(saved_peripherals));
+        sender.send_replace(State::Ok(SavedPeripheral::load_all(&db).unwrap()));
     }
 
     sender.subscribe()
@@ -93,24 +71,28 @@ pub async fn peripherals() -> tokio::sync::watch::Receiver<State<Vec<SavedPeriph
 pub fn save_peripheral(peripheral: SavedPeripheral) -> Result<(), Error> {
     let db = base::get::<Arc<sled::Db>>();
 
+    let remove_if_equal = |kind: PeripheralKind| -> Result<(), Error> {
+        if let Some(p) = SavedPeripheral::load_kind(&db, &kind)? {
+            if peripheral.uuid == p.uuid  {
+                db.remove(&SavedPeripheral::key_for_kind(&kind))?;
+            }
+        }
+
+        Ok(())
+    };
+
+    remove_if_equal(PeripheralKind::Bicycle).unwrap();
+    remove_if_equal(PeripheralKind::Foot).unwrap();
+
     db.insert(
-        format!(
-            "peripheral_{}",
-            Into::<&'static str>::into(&peripheral.kind)
-        ),
+        SavedPeripheral::key_for_kind(&peripheral.kind),
         peripheral.uuid.as_str(),
     )
     .unwrap();
     db.flush().unwrap();
 
     SAVED_PERIPHERALS.get().unwrap().send_modify(move |state| {
-        if let State::Ok(peripherals) = state {
-            if let Some(per) = peripherals.iter_mut().find(|p| p.kind == peripheral.kind) {
-                *per = peripheral;
-            } else {
-                peripherals.push(peripheral);
-            }
-        }
+        *state = State::Ok(SavedPeripheral::load_all(&db).unwrap());
     });
 
     Ok(())

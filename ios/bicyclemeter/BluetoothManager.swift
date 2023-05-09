@@ -75,7 +75,11 @@ class BluetoothManager: NSObject, ObservableObject {
         }
     }
 
-    func cancelConnection(_ peripheral: CBPeripheral) {
+    func cancelConnection(_ uuid: UUID) {
+        guard let peripheral = self.central.retrievePeripherals(withIdentifiers: [uuid]).first(where: { per in per.identifier == uuid }) else {
+            return
+        }
+
         self.central.cancelPeripheralConnection(peripheral)
     }
 

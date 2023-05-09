@@ -59,7 +59,7 @@ pub extern "C" fn reax_storage_store_track_value(
 ) -> *mut u8 {
     let value = unsafe { deserialize(bytes, size) };
 
-    let bytes = bincode::serialize(&::storage::track::store_track_value(value)).unwrap();
+    let bytes = bincode::serialize(&::storage::track::store_track_point(value)).unwrap();
 
     unsafe { f(bytes.as_ptr(), bytes.len()) }
 }

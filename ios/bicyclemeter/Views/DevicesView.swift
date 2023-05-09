@@ -50,13 +50,16 @@ struct DevicesView: View {
                     self.scanTask = nil
                 }
             },
+            savePeripheral: { peripheral in self.selectedPeripheral = peripheral },
             connectPeripheral: { peripheral in
-                self.selectedPeripheral = peripheral
                 do {
                     try self.bluetooth.connectPeripheral(peripheral.uuid)
                 } catch {
                     fatalError("Failed to connect to peripheral, \(error)")
                 }
+            },
+            disconnectPeripheral: { peripheral in
+                self.bluetooth.cancelConnection(peripheral.uuid)
             }
         )
         .sheet(
@@ -127,7 +130,7 @@ struct DevicesView: View {
             for peripheral in self.discoveredPeripherals {
                 if !self.savedPeripherals.contains(where: { $0.1.uuid == peripheral.identifier }) &&
                     (peripheral.state == .connected || peripheral.state == .connecting) {
-                    self.bluetooth.cancelConnection(peripheral)
+                    self.bluetooth.cancelConnection(peripheral.identifier)
                 }
             }
         }
@@ -142,7 +145,9 @@ private struct _DevicesView: View {
 
     let stopScanning: () -> ()
     let scanPeripherals: () -> ()
+    let savePeripheral: (DiscoveredPeripheral) -> ()
     let connectPeripheral: (DiscoveredPeripheral) -> ()
+    let disconnectPeripheral: (DiscoveredPeripheral) -> ()
 
     var body: some View {
         VStack(spacing: 8.0) {
@@ -150,19 +155,29 @@ private struct _DevicesView: View {
                 if !self.savedPeripherals.isEmpty {
                     Section("Saved Sensors") {
                         ForEach(self.savedPeripherals, id: \.self.1.uuid) { (kind, peripheral) in
-                            HStack {
-                                Text(peripheral.name ?? "-")
-                                Spacer()
-                                switch peripheral.state {
-                                case .connected:
-                                    Text("Connected")
-                                        .foregroundColor(.gray)
-                                case .connecting:
-                                    Text("Connecting")
-                                        .foregroundColor(.gray)
-                                default:
-                                    Text("Disconnected")
-                                        .foregroundColor(.gray)
+                            Button(action: {
+                                if peripheral.state == .connected || peripheral.state == .connecting {
+                                    self.disconnectPeripheral(peripheral)
+                                } else {
+                                    self.connectPeripheral(peripheral)
+                                }
+                            }) {
+                                HStack {
+                                    Text(peripheral.name ?? "-")
+                                    Spacer()
+                                    switch peripheral.state {
+                                    case .connected:
+                                        Text("Connected")
+                                            .foregroundColor(.gray)
+                                    case .connecting:
+                                        Text("Connecting")
+                                            .foregroundColor(.gray)
+                                    default:
+                                        Text("Disconnected")
+                                            .foregroundColor(.gray)
+                                    }
+
+                                    Text(" - \(kind.toString())")
                                 }
                             }
                         }
@@ -176,6 +191,7 @@ private struct _DevicesView: View {
 
                             Button(action: {
                                 self.connectPeripheral(peripheral)
+                                self.savePeripheral(peripheral)
                             }) {
                                 VStack(alignment: .leading, spacing: 4.0) {
                                     HStack {
@@ -337,7 +353,9 @@ struct DevicesView_Previews: PreviewProvider {
             ],
             stopScanning: { },
             scanPeripherals: { },
-            connectPeripheral: { _ in }
+            savePeripheral: { _ in },
+            connectPeripheral: { _ in },
+            disconnectPeripheral: { _ in }
         )
         .sheet(
             item: .constant(nil as DiscoveredPeripheral?),

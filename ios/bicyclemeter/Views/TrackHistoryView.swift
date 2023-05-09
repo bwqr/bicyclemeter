@@ -5,7 +5,7 @@ struct TrackHistoryView: View {
 
     var body: some View {
         VStack {
-            ForEach(tracks, id: \.self) { track in
+            List(tracks, id: \.self) { track in
                 NavigationLink(destination: TrackView(timestamp: Int64(track)!), label: {
                     Text(track)
                 })
