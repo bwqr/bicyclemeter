@@ -177,7 +177,7 @@ class Runtime {
         }
         
         guard let joinHandle = stream.joinHandle else {
-            fatalError("Aborting an stream without a joinHandle \(streamId)")
+            fatalError("Aborting a stream without a joinHandle \(streamId)")
         }
         
         reax_abort(joinHandle)

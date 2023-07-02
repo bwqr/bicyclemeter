@@ -81,7 +81,7 @@ private struct _CyclingView: View {
                     VStack {
                         HistogramTitle(title: "RPM", value: self.rpm)
                             .zIndex(10.0)
-                        HistoryChartView(maxPoints: 10.0, range: (0.0, 60.0), points: rpmHistory)
+                        HistoryChartView(maxPoints: 60.0, range: (0.0, 60.0), points: rpmHistory)
                             .frame(height: 120.0)
                     }
                     .clipped()
@@ -89,7 +89,7 @@ private struct _CyclingView: View {
                     VStack {
                         HistogramTitle(title: "Slope", value: self.slope)
                             .zIndex(10.0)
-                        HistoryChartView(maxPoints: 10.0, range: (-90.0, 90.0), points: slopeHistory)
+                        HistoryChartView(maxPoints: 60.0, range: (-45.0, 45.0), points: slopeHistory)
                             .frame(height: 120.0)
                     }
                     .clipped()
@@ -97,7 +97,7 @@ private struct _CyclingView: View {
                     VStack {
                         HistogramTitle(title: "Speed", value: self.speed)
                             .zIndex(10.0)
-                        HistoryChartView(maxPoints: 10.0, range: (0.0, 90.0), points: speedHistory)
+                        HistoryChartView(maxPoints: 60.0, range: (0.0, 90.0), points: speedHistory)
                             .frame(height: 120.0)
                     }
                     .clipped()

@@ -92,6 +92,7 @@ private struct _ContentView: View {
                 .cornerRadius(8)
                 .padding([.leading, .trailing, .bottom], 18)
             }
+            .background(.ultraThickMaterial)
             .navigationTitle("Bicyclemeter")
         }
     }

@@ -1,5 +1,10 @@
 import CoreLocation
 
+let FORWARD = Vec3(x: 0.0, y: -1.0, z: 0.0)
+let DOWN = Vec3(x: 0.0, y: 0.0, z: 1.0)
+let TILT = FORWARD.cross(vec: DOWN)
+let G = 1.0
+
 struct OptionalTrackPoint {
     public var rpm: Double? = nil
     public var slope: Double? = nil
@@ -15,8 +20,8 @@ struct OptionalTrackPoint {
 }
 
 class TrackPointHistory {
-    private static let MAX_HISTORY = 3
-    static let MAX_WINDOW = 10
+    private static let MAX_HISTORY = 60
+    static let MAX_WINDOW = 1
 
     var points: [TrackPoint] = []
     private var windowedPoints: [TrackPoint] = []
@@ -76,6 +81,7 @@ class TrackManager: NSObject, ObservableObject {
 
         if !self.tracking {
             self.tracking = true
+            self.trackPointHistory = TrackPointHistory()
 
             do {
                 try TrackViewModel.startTrack()
@@ -106,7 +112,7 @@ class TrackManager: NSObject, ObservableObject {
 
             self.observerTask = Task {
                 for await (kind, data) in self.bluetooth.subscribe() {
-                    if data.count != 12 {
+                    if data.count != 8 {
                         print("Received data does not have enough bytes, \(data.count)")
                         continue
                     }
@@ -115,22 +121,26 @@ class TrackManager: NSObject, ObservableObject {
                         // We only want the accel values when the kind is .Bicycle
                         // to obtain slope
                         let accel = Vec3(
-                            x: Double(Int16(data[0]) << 8 + Int16(data[1])),
-                            y: Double(Int16(data[2]) << 8 + Int16(data[3])),
-                            z: Double(Int16(data[4]) << 8 + Int16(data[5]))
+                            x: Double(Int16(data[0]) << 8 + Int16(data[1])) / 1000.0,
+                            y: Double(Int16(data[2]) << 8 + Int16(data[3])) / 1000.0,
+                            z: Double(Int16(data[4]) << 8 + Int16(data[5])) / 1000.0
                         )
 
-                        self.optionalTrackPoint.slope = accel.x
+                        let accel_tilt = accel.project(vec: TILT)
+                        let accel_forward = accel.project(vec: FORWARD)
+                        let accel_down = accel.project(vec: DOWN)
+
+                        let gf_len = abs(G - accel_tilt.len() - accel_down.len())
+                        // assume that vec and gf always have the same direction
+                        let gf = accel_forward.norm().scale(sc: gf_len)
+                        let slope = atan2(gf.dot(vec: FORWARD.norm()), accel_down.dot(vec: DOWN.norm())) * 180.0 / Double.pi
+                        self.optionalTrackPoint.slope = min(max(slope, -90.0), 90.0)
                     case .Foot:
                         // We only want the gyro values when the kind is .Foot
                         // to obtain RPM
-                        let gyro = Vec3(
-                            x: Double(Int16(data[6]) << 8 + Int16(data[7])),
-                            y: Double(Int16(data[8]) << 8 + Int16(data[9])),
-                            z: Double(Int16(data[10]) << 8 + Int16(data[11]))
-                        )
+                        let angVel = Double(UInt16(data[6]) << 8 + UInt16(data[7])) / 100.0
 
-                        self.optionalTrackPoint.rpm = gyro.x / 10.0
+                        self.optionalTrackPoint.rpm = angVel * 60.0 / 360.0
                     }
                 }
             }

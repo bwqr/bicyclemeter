@@ -240,6 +240,7 @@ private struct _DevicesView: View {
             }
             .padding([.leading, .trailing, .bottom], 18)
         }
+        .background(.ultraThickMaterial)
         .navigationTitle("Sensors")
     }
 }

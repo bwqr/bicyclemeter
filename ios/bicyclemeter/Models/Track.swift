@@ -1,10 +1,37 @@
 import CoreMotion
 import Serde
 
-struct Vec3<T> {
+struct Vec3<T: FloatingPoint> {
     let x: T
     let y: T
     let z: T
+
+    func len() -> T {
+        sqrt(x * x + y * y + z * z)
+    }
+
+    func scale(sc: T) -> Vec3<T> {
+        return Vec3(x: x * sc, y: y * sc, z: z * sc)
+    }
+
+    func norm() -> Vec3<T> {
+        let len = self.len()
+
+        return Vec3(x: x / len, y: y / len, z: z / len)
+    }
+
+    func cross(vec: Vec3<T>) -> Vec3<T> {
+        return Vec3(x: self.y * vec.z - self.z * vec.y, y: self.z * vec.x - self.x * vec.z, z: self.x * vec.y - self.y * vec.x)
+    }
+
+    func dot(vec: Vec3<T>) -> T {
+        return x * vec.x + y * vec.y + z * vec.z
+    }
+
+    func project(vec: Vec3<T>) -> Vec3<T> {
+        let unit = vec.norm()
+        return unit.scale(sc: unit.dot(vec: self))
+    }
 }
 
 struct TrackPoint {
